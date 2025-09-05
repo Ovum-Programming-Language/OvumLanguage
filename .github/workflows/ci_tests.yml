@@ -18,23 +18,23 @@ jobs:
       - name: Build main target
         shell: bash
         run: |
-          cmake --build cmake-build-release --target cpp_tests || echo Built with errors
+          cmake --build cmake-build-release || echo Built with errors
 
       - name: Build tests target
         shell: bash
         run: |
-          cmake --build cmake-build-debug --target cpp_tests_tests || echo Built with errors
+          cmake --build cmake-build-debug --target ovum_tests || echo Built with errors
 
       - name: Run program
         working-directory: .\cmake-build-release
         run: |
-          .\cpp_tests.exe --help
+          .\ovum.exe --help
 
       - name: Run tests
         working-directory: .\cmake-build-debug
         run: |
           echo "Currently unable to run tests on Windows Latest MinGW. See https://gitmemories.com/cristianadam/HelloWorld/issues/12 and https://github.com/microsoft/vscode-cmake-tools/issues/2451"
-          % .\cpp_tests_tests.exe
+          % .\ovum_tests.exe
 
   build-matrix:
     name: Tests and application run on ${{ matrix.config.name }}
@@ -72,22 +72,22 @@ jobs:
       - name: Build main target
         shell: bash
         run: |
-          cmake --build cmake-build-release --target cpp_tests || echo "Built with errors"
+          cmake --build cmake-build-release --target ovum || echo "Built with errors"
 
       - name: Build tests target
         shell: bash
         run: |
-          cmake --build cmake-build-debug --target cpp_tests_tests || echo "Built with errors"
+          cmake --build cmake-build-debug --target ovum_tests || echo "Built with errors"
 
       - name: Run program
         shell: bash
         working-directory: ./cmake-build-release
         run: |
           if [ "$RUNNER_OS" == "Windows" ]; then
-            ./cpp_tests.exe --help
+            ./ovum.exe --help
           else 
             cd bin
-            ./cpp_tests --help
+            ./ovum --help
           fi
 
       - name: Run tests
@@ -95,10 +95,10 @@ jobs:
         working-directory: ./cmake-build-debug
         run: |
           if [ "$RUNNER_OS" == "Windows" ]; then
-            ./cpp_tests_tests.exe
+            ./ovum_tests.exe
           else
             cd tests
-            ./cpp_tests_tests
+            ./ovum_tests
           fi
 
   memory-leaks:
@@ -117,9 +117,9 @@ jobs:
 
       - name: Build tests target
         run: |
-          cmake --build cmake-build --target cpp_tests_tests
+          cmake --build cmake-build --target ovum_tests
 
       - name: Run valgrind
         working-directory: ./cmake-build/tests
         run: |
-          valgrind --leak-check=full --track-origins=yes --error-exitcode=1 ./cpp_tests_tests
+          valgrind --leak-check=full --track-origins=yes --error-exitcode=1 ./ovum_tests
