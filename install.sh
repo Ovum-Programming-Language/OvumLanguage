@@ -1,13 +1,19 @@
 #!/bin/sh
 
 OS_NAME="$(cmake -P ./PrintOS.cmake 2>&1)"
-PROJECT_NAME="cpp_tests"
+PROJECT_NAME="ovum"
 CMAKE_BUILD_DIR="$HOME/CMakeBuilds"
 CMAKE_PROJECT_DIR="$CMAKE_BUILD_DIR/$PROJECT_NAME"
+LOCAL_CONFIG_DIR="./.config"
+CONFIG_DIR="$HOME/.config/$PROJECT_NAME"
 
 if [ "x$SAVE_PREV" = "x" ]; then
   if [ -e "$CMAKE_PROJECT_DIR" ]; then
     rm -rf "$CMAKE_PROJECT_DIR"
+  fi
+
+  if [ -e "$CONFIG_DIR" ]; then
+    rm -rf "$CONFIG_DIR"
   fi
 fi
 
@@ -24,7 +30,14 @@ fi
 
 EXEC_LINK_PATH="$HOME/$PROJECT_NAME$EXEC_EXTENSION"
 
+git config --replace-all pack.windowMemory 10m
+git config --replace-all pack.packSizeLimit 20m
+
 if (cmake -S . -B "$CMAKE_PROJECT_DIR" -DCMAKE_BUILD_TYPE=Release -G "Unix Makefiles" && cmake --build "$CMAKE_PROJECT_DIR" --target "$PROJECT_NAME"); then
+  if [ "x$SAVE_PREV" = "x" ]; then
+    cp -rf "$LOCAL_CONFIG_DIR" "$CONFIG_DIR"
+  fi
+
   rm -f "$EXEC_LINK_PATH"
   ln -s "$EXEC_PATH" "$EXEC_LINK_PATH"
   echo ''
@@ -38,6 +51,7 @@ if (cmake -S . -B "$CMAKE_PROJECT_DIR" -DCMAKE_BUILD_TYPE=Release -G "Unix Makef
     if [ "$OS_NAME" = "Linux" ]; then
       printf 'Do you want to add this utility to /usr/bin (y/n)? ' && read -r CHOISE
       COMMON_LINK_PATH="/usr/bin/${PROJECT_NAME:?}"
+      COMMON_CONFIG_DIR="/etc/${PROJECT_NAME:?}"
       COMMON_PROJECT_DIR="/opt/${PROJECT_NAME:?}"
       COMMON_EXEC_PATH="$COMMON_PROJECT_DIR/bin/$PROJECT_NAME"
 
@@ -45,12 +59,17 @@ if (cmake -S . -B "$CMAKE_PROJECT_DIR" -DCMAKE_BUILD_TYPE=Release -G "Unix Makef
         sudo -S rm -f "$COMMON_LINK_PATH"
 
         if (sudo ln -s "$EXEC_PATH" "$COMMON_LINK_PATH"); then
+          if [ -e "$COMMON_CONFIG_DIR" ]; then
+            sudo rm -rf "$COMMON_CONFIG_DIR"
+          fi
+
           if [ -e "$COMMON_PROJECT_DIR" ]; then
             sudo rm -rf "$COMMON_PROJECT_DIR"
           fi
 
           sudo rm -f "$COMMON_LINK_PATH"
           sudo cp -r "$CMAKE_PROJECT_DIR" "$COMMON_PROJECT_DIR"
+          sudo cp -r "$LOCAL_CONFIG_DIR" "$COMMON_CONFIG_DIR"
           sudo ln -s "$COMMON_EXEC_PATH" "$COMMON_LINK_PATH"
           echo "Accepted, run utility with $PROJECT_NAME"
         else
@@ -72,12 +91,10 @@ if (cmake -S . -B "$CMAKE_PROJECT_DIR" -DCMAKE_BUILD_TYPE=Release -G "Unix Makef
     echo "Because of Windows-specific limitations, it is not possible to create a link to it."
     echo "You can run it from $HOME/$PROJECT_NAME as .\\$PROJECT_NAME$EXEC_EXTENSION"
     echo "Or you can run CMD.EXE with administrative privileges and type: "
-    echo 'mklink "%userprofile%\cpp_tests.exe" "%userprofile%\cpp_tests\cpp_tests.exe"'
+    echo 'mklink "%userprofile%\ovum.exe" "%userprofile%\ovum\ovum.exe"'
     echo ''
     mkdir "$HOME/$PROJECT_NAME"
     cp "$CMAKE_PROJECT_DIR/$PROJECT_NAME$EXEC_EXTENSION" "$HOME/$PROJECT_NAME/$PROJECT_NAME$EXEC_EXTENSION"
-    # ALso copy all *dll files like following:
-    # cp -r "$CMAKE_PROJECT_DIR/liblib.dll" "$HOME/$PROJECT_NAME/liblib.dll"
     cd "$HOME/$PROJECT_NAME" && "./$PROJECT_NAME$EXEC_EXTENSION" -h
     exit 0
   else
