@@ -1,7 +1,6 @@
 #ifndef TEMPORARYDIRECTORYTESTSUITE_HPP_
 #define TEMPORARYDIRECTORYTESTSUITE_HPP_
 
-#include <filesystem>
 #include <string>
 
 #include <gtest/gtest.h>

@@ -5,9 +5,7 @@ add_executable(
         main_test.cpp
         unit_tests.cpp
         test_functions.cpp
-        test_functions.hpp
-        ProjectIntegrationTestSuite.cpp
-        ProjectIntegrationTestSuite.hpp
+        test_suites/ProjectIntegrationTestSuite.cpp
 )
 
 target_link_libraries(
