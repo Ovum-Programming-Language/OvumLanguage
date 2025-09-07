@@ -1,46 +1,48 @@
 # Ovum Programming Language
 
-> This README describes **Ovum**: syntax & semantics, formal EBNF grammar, lexer & parser rules, runtime & VM requirements, unsafe operations, and code examples (snippets + a complete program).
+> This README (for `.ovum` sources) describes **Ovum**: syntax & semantics, nullable types, formal EBNF grammar, lexer & parser rules, runtime & VM requirements, unsafe operations, casting, functional objects, and code examples (snippets + a complete program).
 
 ---
 
 ## 1) Overview
 
-**Ovum** is a strongly **statically typed**, **single-threaded** language with modern, Kotlin-like syntax and a focus on safety, clarity, and performance.
+**Ovum** is a strongly **statically typed**, **single-threaded** language with Kotlin-like syntax and a focus on safety, clarity, and performance.
 
 Key design points:
 
 * **Strong static typing** with **immutability by default** (`mut` required for mutation).
+* **Nullable types** and Kotlin-style null-handling: `Type?`, safe calls `?.`, Elvis `?:`, non-null assertion `!!`.
 * **Pure functions** (no side effects, VM-level result caching).
 * **Classes & interfaces**
 
   * **No class inheritance**; classes only **implement interfaces**.
-  * **Every class implements `Object`** (root interface) implicitly; **all interfaces extend `Object`**. `Object` has **only a virtual destructor**.
-  * Interface methods are **virtual by default**; class methods that implement them must be marked `override`.
+  * **Root `Object`** is implicit for all classes and interfaces (no need to write `: Object`). It declares only a **virtual destructor**.
+  * Interfaces are named with **leading `I`** (C# style): e.g., `IGreeter`, `IComparable`.
+  * Interface methods are **public** and **virtual** by default.
+  * Class methods implementing interface members must be marked `override`.
+  * **Access modifiers are mandatory** for all fields and methods in classes (`public`/`private`).
+  * **Fields use `let` (immutable) or `mut` (mutable)**.
 * **Namespaces** with `::` resolution (e.g., `sys::Print`).
 * **Built-in operators**; **no user-defined operators**.
 * **Preprocessor**: `#import`, `#define`, `#ifdef`, `#ifndef`, `#else`, `#undef`.
 * **Managed runtime**: VM with **JIT** and **GC**; **no manual memory management**.
 * **Single-threaded runtime**: no concurrency primitives.
 * **Passing semantics**: all user-defined and non-primitive types (including `String` and all arrays) are **passed by reference** (const by default).
+* **File extension**: `.ovum`.
 
 ### Standard Interfaces & Object Model
 
-* **`Object`**: root interface with **only a virtual destructor**.
+* **`Object`**: implicit root; has only a **virtual destructor**.
+  Enables safe, uniform storage (e.g., in `ObjectArray`).
+* Standard interfaces (all implicitly extend `Object`):
 
-  * All classes implement `Object` by default.
-  * All interfaces extend `Object`.
-  * Enables safe, uniform storage of user-defined types (e.g., in `ObjectArray`).
-* Additional standard interfaces:
+  * **`IStringConvertible`** — `ToString(): String`
+  * **`IComparable`** — `IsLess(other: Object): Bool`
 
-  * **`StringConvertible`** — `ToString(): String`
-  * **`Comparable`** — `IsLess(other: Object): Bool`
+    * Required for user-defined types used as parameters to **pure** functions (stable ordering/keys).
+  * **`IHashable`** — `GetHash(): Int`
 
-    * Required when user-defined types appear as parameters to **pure** functions (for stable ordering/keys).
-    * Implementations must validate and safely downcast `other` before using it.
-  * **`Hashable`** — `GetHash(): Int`
-
-> **Naming**: **Classes, functions, and methods use PascalCase** (e.g., `Main`, `ToString`, `IsLess`). Keywords/modifiers are lowercase (`class`, `interface`, `mut`, `override`, `pure`, etc.).
+> **Naming**: **Classes, functions, methods use PascalCase** (e.g., `Main`, `ToString`, `IsLess`). Keywords/modifiers remain lowercase (`class`, `interface`, `mut`, `override`, `pure`, `unsafe`, etc.).
 
 ---
 
@@ -55,97 +57,145 @@ Key design points:
 * `Byte`
 * `Pointer` *(only meaningful in `unsafe` code)*
 
+> Any primitive may have a **nullable** counterpart via `?` (e.g., `Int?`).
+
 ### Non-Primitive / Reference Types
 
 * `String` *(reference type; not primitive)*
-* **Array classes (no templates / generics)**:
+* **Array classes (no templates / generics):**
 
   * For primitives: `IntArray`, `FloatArray`, `BoolArray`, `CharArray`, `ByteArray`, `PointerArray`
-  * For objects: **`ObjectArray`** (stores elements of type `Object`)
-  * **Convenience**: `StringArray` (standard library class for arrays of `String`, commonly used for `Main` arguments)
-* Containers `List`, `Map` may exist as reference types (non-primitive) in the stdlib (not templated in this version).
+  * For objects: **`ObjectArray`**
+  * **Convenience**: `StringArray` (array of `String`, used for `Main`)
 
-> All non-primitive values are passed by link (reference), **const by default**. To mutate through a parameter, mark the parameter `mut` and ensure the underlying fields are `mut`.
+> All non-primitive values are passed by link (reference), **const by default**.
 
 ---
 
-## 3) Syntax & Semantics (Description)
+## 3) Nullability & Boolean Logic
 
-### Declarations
+### Nullability (Kotlin-style)
 
-* **Functions**: `pure fun Name(params): ReturnType { ... }`
+* Append `?` to make a type **nullable**: `Int?`, `String?`, `Point?`.
+* **Safe call**: `expr?.Method()` calls only if `expr != null`; otherwise yields `null` (if the method returns a reference type) or a sensible default for chaining to Elvis.
+  Example: `name?.ToString()?.Length() ?: 0`
+* **Elvis**: `a ?: b` evaluates to `a` if non-null, else `b`.
+* **Non-null assertion**: `x!!` throws an unhandleable error if `x == null`.
+* **Cast to Bool**: any value can be explicitly cast to `Bool`.
 
-  * Pure functions: side-effect free; may be cached by the VM.
-  * If parameters include user-defined reference types, those types must implement **`Comparable`** (`IsLess`).
-* **Variables**: immutable by default. Use `mut` to permit reassignment/mutation.
-* **Classes**: `class Name implements IFace1, IFace2 { ... }`
+  * Primitives: zero → `false`, non-zero → `true`.
+  * Non-primitives: `true` iff the reference is a valid (non-null, live) object.
 
-  * No class inheritance.
-  * **Fields and methods must specify an access modifier** (`private` or `public`).
-  * **Fields use `let` or `mut`**:
+### Boolean Logic
 
-    * `public let X: Int` — immutable field
-    * `private mut Count: Int` — mutable field
-  * Implementing interface methods must be marked `override`.
-  * `static` fields allowed; **`static mut` is unsafe** to write.
-* **Interfaces**: `interface Name : Object { ... }`
+* **Short-circuit**: `&&`, `||` (like Kotlin/Java).
+* **Negation**: `!cond`.
+* **XOR**: `xor` infix on `Bool` (e.g., `a xor b`).
+  (Also `==`/`!=` for equality/inequality of Booleans.)
 
-  * **Methods are public**; access modifiers are not used in interfaces.
-  * Signatures only (no fields, no bodies); methods are implicitly virtual.
+---
+
+## 4) Casting & Type Tests
+
+* **Upcasts** (to `Object` or an implemented interface): **safe**, non-nullable result.
+* **Downcasts** (to a concrete class or more specific interface): **nullable** result.
+
+  * `obj as Foo` has type `Foo?`; it yields `null` if `obj` is not a `Foo`.
+  * Use `!!` to assert non-null (aborts if `null`) or `?:` to handle null.
+  * **Guideline**: Prefer `if (obj is Foo) { val f = (obj as Foo)!!; ... }`.
+* **Type test**: `expr is Type` → `Bool` (use before downcasting).
+* **Byte view casts**:
+
+  * **Unsafe** cast of any value to **(const) `ByteArray`**.
+  * **Unsafe** cast of any value to **mutable `ByteArray`**.
+  * Require `unsafe { ... }`.
+
+---
+
+## 5) Syntax & Semantics (Description)
+
+### Functions
+
+* Declared with `fun`, PascalCase names: `fun Compute(a: Int): Int { ... }`
+* **Pure** functions: `pure fun Hash(o: Object): Int { ... }`
+
+  * Side-effect free; VM may cache results.
+  * If parameters include user-defined reference types, those types must implement **`IComparable`**.
+
+### Classes
+
+* `class Name implements IFace1, IFace2 { ... }`
+
+  * **No class inheritance**.
+  * **Access modifiers are mandatory** on fields and methods.
+  * **Fields** use `let` (immutable) or `mut` (mutable):
+
+    * `private let Prefix: String`
+    * `public  mut Count: Int`
+  * **Methods** must declare access and can be `override`/`pure`:
+
+    * `public override fun Run(): Int { ... }`
+  * **Static** fields supported; **writing `static mut` is unsafe**.
+  * **Destructor**: optional, overrides the implicit virtual destructor from `Object`.
+
+    * Syntax: `public destructor(): Void { ... }` (no parameters, no return).
+    * Called automatically by GC finalization; **manual calls are unsafe**.
+
+### Interfaces
+
+* `interface IGreeter { fun Greet(name: String): String; }`
+
+  * Methods are **public** and **virtual** by default.
+  * No fields, no bodies.
 
 ### Namespaces & Preprocessor
 
 * Namespace resolution with `::` (e.g., `sys::Print`).
-* Preprocessor directives:
+* Preprocessor: `#import`, `#define`, `#ifdef`, `#ifndef`, `#else`, `#undef`.
 
-  * `#import "path.ovm"`
-  * `#define NAME [value]`
-  * `#ifdef NAME` / `#ifndef NAME` / `#else` / `#endif`
-  * `#undef NAME`
+### Functional Objects (`call`)
 
-### Casting & Type Tests
+* Classes can declare a **special `call`** member that makes instances **callable** like functions.
+* If a class **declares `call`**, it **may have other members**.
+* If a class **does not declare `call`**, it **must not have any non-`call` members** (i.e., it must be purely functional).
+* A function literal `fun(...) : T { ... }` can be **coerced** to a class type that exposes a compatible `call(...) : T`.
 
-* **Upcasts** (e.g., `Derived` → `BaseInterface`/`Object`): **safe**.
-* **Downcasts** (e.g., `Object`/interface → concrete class): **runtime-checked**.
+Example:
 
-  * Use explicit cast: `expr as TargetClass`.
-  * **If the downcast fails, an unhandleable error is raised (program abort).**
-  * **Before a downcast you must check**: `if (expr is TargetClass) { let v = expr as TargetClass; ... }`
-* **ByteArray casts** (view of raw bytes):
+```ovum
+class CustomFunctional {
+    public call(a: Int?, b: Int?): Int
+}
 
-  * **Unsafe cast of any value to (const) `ByteArray`**.
-  * **Unsafe cast of any value to mutable `ByteArray`** (mutable view).
-  * Both require `unsafe { ... }`, e.g., `unsafe { let bytes: ByteArray = value as ByteArray; }`
-* **Explicit cast to `Bool`** is **safe**:
+class DefinedFunctional {
+    public mut Multiplier: Int
 
-  * For primitives: `0`/`0.0`/`'\0'` → `false`; non-zero → `true`.
-  * For non-primitives: `true` iff the reference is a **valid** (non-null, live) object.
-* **`is` type test**: `expr is Type` → `Bool` (must be used prior to downcasting).
+    public fun DefinedFunctional(multiplier: Int): DefinedFunctional {
+        this.Multiplier = multiplier
+        return this
+    }
 
-### Purity Rules (Summary)
+    // Defines the callable behavior; pure body allowed
+    public call(secondMultiplier: Int): Int = pure fun(secondMultiplier: Int): Int {
+        return Multiplier * secondMultiplier
+    }
+}
 
-* **Pure** functions cannot:
+let AddNullable: CustomFunctional = fun(a: Int?, b: Int?): Int {
+    return (a ?: 0) + (b ?: 0)
+}
 
-  * Perform I/O, call impure/system/`unsafe` code.
-  * Mutate global or external state, return handles to newly allocated mutable state.
-* For pure function parameters of user-defined class types, require **`Comparable`** (`IsLess(other: Object): Bool`) to enable stable ordering/keys.
-
-### Unsafe Blocks
-
-Operations only allowed in `unsafe { ... }`:
-
-* Declaring/writing **global `mut`** variables and **`static mut`** fields.
-* Casting const → mutable.
-* Using **`Pointer`**, address-of and dereference.
-* **Manual destructor** calls.
-* Any **`sys::Interope`** (FFI) call.
-* Casting any type to **(const or mutable) `ByteArray`**.
+fun Main(args: StringArray): Int {
+    // Constructor call then functional call via `call`
+    return AddNullable(2, DefinedFunctional(-1)(2))
+}
+```
 
 ---
 
-## 4) Formal Grammar (EBNF)
+## 6) Formal Grammar (EBNF)
 
-> Core EBNF; whitespace/comments omitted. Operator precedence is in §5.
+> Core EBNF; whitespace/comments omitted. Operator precedence in §7.
 
 ```ebnf
 Program         ::= { Import | Conditional | GlobalDef } ;
@@ -153,22 +203,21 @@ Program         ::= { Import | Conditional | GlobalDef } ;
 Import          ::= "#import" StringLiteral ;
 Define          ::= "#define" Identifier [ NumberLiteral ] ;
 Undef           ::= "#undef" Identifier ;
-Conditional     ::= "#ifdef" Identifier { GlobalDef | Import | Conditional } 
+Conditional     ::= "#ifdef" Identifier { GlobalDef | Import | Conditional }
                     [ "#else" { GlobalDef | Import | Conditional } ] "#endif"
-                 | "#ifndef" Identifier { GlobalDef | Import | Conditional } 
+                 | "#ifndef" Identifier { GlobalDef | Import | Conditional }
                     [ "#else" { GlobalDef | Import | Conditional } ] "#endif" ;
 
 GlobalDef       ::= FunctionDecl | ClassDecl | InterfaceDecl | GlobalVarDecl ;
 
 FunctionDecl    ::= [ "pure" ] "fun" Identifier "(" [ ParamList ] ")" [ ":" Type ] Block ;
-
 ParamList       ::= Parameter { "," Parameter } ;
 Parameter       ::= [ "mut" ] Identifier ":" Type ;
 
 ClassDecl       ::= "class" Identifier [ "implements" TypeList ] ClassBody ;
 TypeList        ::= Type { "," Type } ;
 ClassBody       ::= "{" { ClassMember } "}" ;
-ClassMember     ::= FieldDecl | StaticFieldDecl | MethodDecl ;
+ClassMember     ::= FieldDecl | StaticFieldDecl | MethodDecl | DestructorDecl ;
 
 FieldDecl       ::= ( "private" | "public" ) ( "let" | "mut" ) Identifier ":" Type [ "=" Expression ] ";" ;
 StaticFieldDecl ::= "static" ( "private" | "public" ) ( "let" | "mut" ) Identifier ":" Type [ "=" Expression ] ";" ;
@@ -176,13 +225,17 @@ StaticFieldDecl ::= "static" ( "private" | "public" ) ( "let" | "mut" ) Identifi
 MethodDecl      ::= ( "private" | "public" ) [ "override" ] [ "pure" ]
                     "fun" Identifier "(" [ ParamList ] ")" [ ":" Type ] ( Block | ";" ) ;
 
-InterfaceDecl   ::= "interface" Identifier ":" "Object" InterfaceBody ;
+DestructorDecl  ::= ( "private" | "public" ) "destructor" "(" ")" ":" "Void" Block ;
+
+InterfaceDecl   ::= "interface" Identifier InterfaceBody ;  // implicitly extends Object
 InterfaceBody   ::= "{" { InterfaceMethod } "}" ;
-InterfaceMethod ::= "fun" Identifier "(" [ ParamList ] ")" [ ":" Type ] ";" ;  // public & virtual by default
+InterfaceMethod ::= "fun" Identifier "(" [ ParamList ] ")" [ ":" Type ] ";" ;  // public & virtual
 
 GlobalVarDecl   ::= [ "mut" ] Identifier ":" Type "=" Expression ";" ;
 
-Type            ::= PrimitiveType
+Type            ::= NullableType | NonNullType ;
+NullableType    ::= NonNullType "?" ;
+NonNullType     ::= PrimitiveType
                  | "String"
                  | "IntArray" | "FloatArray" | "BoolArray" | "CharArray" | "ByteArray" | "PointerArray"
                  | "ObjectArray"
@@ -203,9 +256,14 @@ ForStmt         ::= "for" "(" Identifier "in" Expression ")" Statement ;
 UnsafeStmt      ::= "unsafe" Block ;
 
 Expression      ::= Assignment ;
-Assignment      ::= OrExpr [ "=" Assignment ] ;
+Assignment      ::= ElvisExpr [ "=" Assignment ] ;
+
+ElvisExpr       ::= OrExpr [ "?:" ElvisExpr ] ;  // right-assoc
+
 OrExpr          ::= AndExpr { "||" AndExpr } ;
-AndExpr         ::= EqualityExpr { "&&" EqualityExpr } ;
+AndExpr         ::= XorExpr { "&&" XorExpr } ;
+XorExpr         ::= EqualityExpr { "xor" EqualityExpr } ;
+
 EqualityExpr    ::= RelExpr { ("==" | "!=") RelExpr } ;
 RelExpr         ::= AddExpr { ("<" | "<=" | ">" | ">=") AddExpr } ;
 AddExpr         ::= MulExpr { ("+" | "-") MulExpr } ;
@@ -217,15 +275,20 @@ UnaryExpr       ::= ("!" | "-" | "&" | "*") UnaryExpr
 Postfix         ::= Primary { PostfixOp } ;
 PostfixOp       ::= "." Identifier
                  | "." Identifier "(" [ ArgList ] ")"
-                 | "(" [ ArgList ] ")"
-                 | "as" Type                 // explicit cast
-                 | "is" Type                 // type test → Bool
+                 | "(" [ ArgList ] ")"          // function call or callable object
+                 | "as" Type                    // explicit cast; downcast yields nullable type
+                 | "is" Type                    // type test → Bool
+                 | "!!"                         // non-null assertion
+                 | "?." Identifier [ "(" [ ArgList ] ")" ]  // safe call chain
                  ;
 
 Primary         ::= Identifier
                  | Literal
                  | "(" Expression ")"
-                 | NamespaceRef ;
+                 | NamespaceRef
+                 | FunctionLiteral ;
+
+FunctionLiteral ::= "fun" "(" [ ParamList ] ")" [ ":" Type ] Block ;
 
 NamespaceRef    ::= Identifier "::" Identifier ;
 ArgList         ::= Expression { "," Expression } ;
@@ -233,21 +296,23 @@ ArgList         ::= Expression { "," Expression } ;
 Literal         ::= NumberLiteral | StringLiteral | CharLiteral | "true" | "false" ;
 ```
 
-> Notes
->
-> * **No templates**; array types are concrete classes (`IntArray`, `ObjectArray`, etc.).
-> * `String`/all arrays are **reference** (non-primitive) types.
-> * `is` and `as` are part of expressions (type test & cast).
-
 ---
 
-## 5) Lexer & Parser Rules
+## 7) Lexer & Parser Rules
 
 ### Tokens
 
 * **Identifiers**: `[A-Za-z_][A-Za-z0-9_]*` (case-sensitive). Style: **PascalCase** for classes/functions/methods.
-* **Literals**: integers, floats, chars (`'A'`, escapes), strings (`"..."`, escapes).
-* **Operators/Punct**: `+ - * / %`, `== != < <= > >=`, `&& || !`, `=`, `.`, `::`, `,`, `;`, `:`, `(` `)` `{` `}`.
+* **Literals**: integers, floats, chars (`'A'`, escapes), strings (`"..."`, escapes), Booleans.
+* **Operators/Punct**:
+
+  * Arithmetic: `+ - * / %`
+  * Comparison: `== != < <= > >=`
+  * Boolean: `&& || ! xor`
+  * Nulls: `?. ?: !!`
+  * Cast/Test: `as is`
+  * Call/Access: `. ( ) :: , ; : { } [ ]`
+  * Assignment: `=`
 
 ### Comments & Whitespace
 
@@ -255,24 +320,27 @@ Literal         ::= NumberLiteral | StringLiteral | CharLiteral | "true" | "fals
 * Block: `/* ... */` (non-nested)
 * Whitespace separates tokens; not otherwise significant.
 
-### Precedence & Associativity (high → low)
+### Precedence (high → low)
 
-1. Unary: `!` `-` `&` `*` (right; `&`/`*` only in `unsafe`)
-2. Multiplicative: `*` `/` `%` (left)
-3. Additive: `+` `-` (left)
-4. Relational: `<` `<=` `>` `>=` (left)
-5. Equality: `==` `!=` (left)
-6. Logical AND: `&&` (left)
-7. Logical OR: `||` (left)
-8. Assignment: `=` (right)
+1. Postfix: member calls `.`, calls `()`, safe call `?.`, non-null `!!`, casts `as`, test `is`
+2. Unary: `!` `-` `&` `*` (right; `&`/`*` only in `unsafe`)
+3. Multiplicative: `*` `/` `%` (left)
+4. Additive: `+` `-` (left)
+5. Relational: `<` `<=` `>` `>=` (left)
+6. Equality: `==` `!=` (left)
+7. XOR: `xor` (left)
+8. Logical AND: `&&` (left)
+9. Logical OR: `||` (left)
+10. Elvis: `?:` (right)
+11. Assignment: `=` (right)
 
 > **No user-defined operators**.
 
 ---
 
-## 6) Runtime, VM & Platform Support
+## 8) Runtime, VM & Platform Support
 
-* **Execution**: Source → bytecode → **Ovum VM**.
+* **Execution**: Source (`.ovum`) → bytecode → **Ovum VM**.
 * **JIT**: Hot paths compiled to native for performance.
 * **GC**: Automatic memory reclamation; **no manual memory management**.
 * **Single-threaded**: Execution model and VM are single-threaded.
@@ -281,7 +349,7 @@ Literal         ::= NumberLiteral | StringLiteral | CharLiteral | "true" | "fals
 
 ---
 
-## 7) System Library & Interop
+## 9) System Library & Interop
 
 * `sys::Print(msg: String): Void`
 * `sys::Time(): Int`
@@ -296,7 +364,7 @@ Literal         ::= NumberLiteral | StringLiteral | CharLiteral | "true" | "fals
 
 ---
 
-## 8) Unsafe Operations (Recap)
+## 10) Unsafe Operations (Recap)
 
 Allowed **only** inside `unsafe { ... }`:
 
@@ -309,217 +377,174 @@ Allowed **only** inside `unsafe { ... }`:
 
 ---
 
-## 9) Code Examples
+## 11) Code Examples
 
-### 9.1 Entry Point (`StringArray`)
+### 11.1 Entry point (`StringArray`)
 
 ```ovum
-// Standard library provides StringArray (array of String).
+// .ovum file
 fun Main(args: StringArray): Int {
-    if (args.Length() == 0) {
-        sys::Print("Hello, Ovum!");
-        return 0;
-    }
-
-    sys::Print("Args count: " + args.Length().ToString());
-    // Example access (APIs are illustrative):
-    // let first: String = args.Get(0);
-    return 0;
+    val count: Int = args.Length() ?: 0
+    sys::Print("Args count: " + count.ToString())
+    return 0
 }
 ```
 
-### 9.2 Variables & Immutability
+### 11.2 Variables, Nulls, Elvis, Safe Calls
 
 ```ovum
-fun DemoVariables(): Void {
-    value: Int = 10;         // immutable local
-    mut counter: Int = 0;    // mutable local
+fun DemoNulls(): Void {
+    val a: Int? = null
+    val b: Int? = 5
 
-    counter = counter + value;
-    sys::Print("Counter = " + counter.ToString());
+    val sum: Int = (a ?: 0) + (b ?: 0)  // Elvis
+    sys::Print("Sum = " + sum.ToString())
+
+    val name: String? = null
+    sys::Print("Name length = " + (name?.Length() ?: 0).ToString())
+
+    val mustNotBeNull: Int = (b!!)      // ok
+    // val crash: Int = (a!!)           // aborts (unhandleable)
 }
 ```
 
-### 9.3 Interfaces, Classes, Fields, and Overrides
+### 11.3 Interfaces, Classes, Fields, Overrides
 
 ```ovum
-interface Greeter : Object {
-    fun Greet(name: String): String;  // public by default
+interface IGreeter {
+    fun Greet(name: String): String  // public + virtual by default
 }
 
-class FriendlyGreeter implements Greeter {
-    private let Prefix: String = "Hello";
-    public  mut Suffix: String = "!";
+class FriendlyGreeter implements IGreeter {
+    private let Prefix: String = "Hello"
+    public  mut Suffix: String = "!"
 
-    // Constructor pattern (returns this for chaining)
     public fun FriendlyGreeter(prefix: String, suffix: String): FriendlyGreeter {
-        this.Prefix = prefix;
-        this.Suffix = suffix;
-        return this;
+        this.Prefix = prefix
+        this.Suffix = suffix
+        return this
     }
 
     public override fun Greet(name: String): String {
-        return Prefix + ", " + name + Suffix;
+        return Prefix + ", " + name + Suffix
     }
 
-    public fun CasualGreet(name: String): String {
-        return "Hi, " + name;
+    // Optional destructor (finalization logic)
+    public destructor(): Void {
+        // release non-memory resources if any (files, handles, etc.)
     }
-}
-
-fun DemoGreeter(): Void {
-    let g: Greeter = FriendlyGreeter("Good morning", "!");
-    sys::Print(g.Greet("Ovum"));
 }
 ```
 
-### 9.4 Standard Interfaces (`StringConvertible`, `Comparable`, `Hashable`)
+### 11.4 Standard Interfaces (`IStringConvertible`, `IComparable`, `IHashable`)
 
 ```ovum
-interface StringConvertible : Object {
-    fun ToString(): String;
-}
+interface IStringConvertible { fun ToString(): String }
+interface IComparable        { fun IsLess(other: Object): Bool }
+interface IHashable          { fun GetHash(): Int }
 
-interface Comparable : Object {
-    fun IsLess(other: Object): Bool;
-}
-
-interface Hashable : Object {
-    fun GetHash(): Int;
-}
-
-class Point implements StringConvertible, Comparable, Hashable {
+class Point implements IStringConvertible, IComparable, IHashable {
     public let X: Int
     public let Y: Int
 
     public fun Point(x: Int, y: Int): Point { this.X = x; this.Y = y; return this; }
 
     public override fun ToString(): String {
-        return "(" + X.ToString() + ", " + Y.ToString() + ")";
+        return "(" + X.ToString() + ", " + Y.ToString() + ")"
     }
 
     public override fun IsLess(other: Object): Bool {
-        if (!(other is Point)) { return false; }               // required check before downcast
-        let p: Point = other as Point;                         // safe after 'is'
-        if (this.X != p.X) return this.X < p.X;
-        return this.Y < p.Y;
+        if (!(other is Point)) return false
+        val p: Point = (other as Point)!!   // safe after is + !!
+        if (this.X != p.X) return this.X < p.X
+        return this.Y < p.Y
     }
 
     public override fun GetHash(): Int {
-        return (X * 1315423911) ^ (Y * 2654435761);
+        return (X * 1315423911) ^ (Y * 2654435761)
     }
 }
 ```
 
-### 9.5 Pure Functions with Caching
+### 11.5 Pure Functions with Caching
 
 ```ovum
 pure fun Fib(n: Int): Int {
-    if (n <= 1) return n;
-    return Fib(n - 1) + Fib(n - 2);
+    if (n <= 1) return n
+    return Fib(n - 1) + Fib(n - 2)
 }
-// For user-defined reference types as parameters, ensure they implement Comparable.
+// For user-defined reference types as parameters, implement IComparable.
 ```
 
-### 9.6 `is`, `as`, and ByteArray Casts
+### 11.6 `is`, `as`, `!!`, and ByteArray Casts
 
 ```ovum
 fun DemoCasts(obj: Object): Void {
-    // Upcast (implicit) and downcast (explicit)
     if (obj is Point) {
-        let p: Point = obj as Point;   // safe after 'is'
-        sys::Print(p.ToString());
-    } else {
-        // obj as Point;   // would abort program (unhandleable) if uncommented
+        val p: Point = (obj as Point)!!   // nullable cast + assert
+        sys::Print(p.ToString())
     }
 
-    // Explicit Bool cast
-    let b1: Bool = 0 as Bool;       // false
-    let b2: Bool = 42 as Bool;      // true
-    let b3: Bool = obj as Bool;     // true if obj is a valid, live reference
+    // Bool cast
+    val b1: Bool = (0 as Bool)      // false
+    val b2: Bool = (42 as Bool)     // true
+    val b3: Bool = (obj as Bool)    // true if non-null
 
-    // Unsafe: view any value as bytes
+    // Unsafe: raw byte views
     unsafe {
-        let cview: ByteArray = obj as ByteArray;        // const byte view
-        let mview: ByteArray = (obj as mut ByteArray);  // mutable byte view
-        // ... use cview/mview ...
+        val bytesConst: ByteArray = (obj as ByteArray)
+        val bytesMut  : ByteArray = (obj as mut ByteArray)
     }
 }
 ```
 
-### 9.7 Unsafe + Interop Example
+### 11.7 Functional Objects (`call`) & Literals
 
 ```ovum
-fun DemoInterope(): Void {
-    let text: String = "Hello";
-    let inBytes: ByteArray = text.ToUtf8NullTerminated();
-    let outBytes: ByteArray = ByteArray(8); // reserve space if C func writes a 64-bit result
-
-    unsafe {
-        let status: Int = sys::Interope("libc.so", "puts", inBytes, outBytes);
-        // Handle status / parse outBytes...
-    }
+class CustomFunctional {
+    public call(a: Int?, b: Int?): Int
 }
-```
 
-### 9.8 Full Example Program
+class DefinedFunctional {
+    public mut Multiplier: Int
 
-```ovum
-#define GREET_FEATURE
+    public fun DefinedFunctional(multiplier: Int): DefinedFunctional {
+        this.Multiplier = multiplier
+        return this
+    }
 
-interface Runner : Object { fun Run(): Int; }
-
-class App implements Runner, StringConvertible {
-    private let Name: String
-
-    public fun App(name: String): App { this.Name = name; return this; }
-
-    public override fun ToString(): String { return "App(" + Name + ")"; }
-
-    public override fun Run(): Int {
-        #ifdef GREET_FEATURE
-        sys::Print("Welcome, " + Name + "!");
-        #else
-        sys::Print("Running...");
-        #endif
-        return 0;
+    public call(secondMultiplier: Int): Int = pure fun(secondMultiplier: Int): Int {
+        return Multiplier * secondMultiplier
     }
 }
 
-pure fun Add(a: Int, b: Int): Int { return a + b; }
+let AddNullable: CustomFunctional = fun(a: Int?, b: Int?): Int {
+    return (a ?: 0) + (b ?: 0)
+}
 
-// Entry point with StringArray
 fun Main(args: StringArray): Int {
-    let app: Runner = App("Ovum");
-    sys::Print("App info: " + (app as App).ToString());
-
-    sys::Print("2 + 3 = " + Add(2, 3).ToString());
-    return app.Run();
+    return AddNullable(2, DefinedFunctional(-1)(2))
 }
 ```
 
 ---
 
-## 10) Build & Run (Conceptual)
+## 12) Build & Run (Conceptual)
 
-1. **Compile** `.ovum` sources → Ovum bytecode (with preprocessing) using Ovum runner.
+1. **Compile** `.ovum` sources → Ovum bytecode (preprocessor applied).
 2. **Execute** on the Ovum VM (single-threaded):
 
-   * Bytecode interpretation → JIT-optimized native where hot.
+   * Bytecode interpretation with JIT for hot paths.
    * GC manages memory automatically.
    * Entry function: `Main(args: StringArray): Int`.
 
 ---
 
-## 11) Notes & Best Practices
+## 13) Notes & Best Practices
 
 * Prefer **immutable** data; use `mut` only when necessary.
-* Implement **`StringConvertible`** for diagnostics (`ToString`).
-* When using **pure functions** with custom types, implement **`Comparable`**.
+* Implement **`IStringConvertible`** for diagnostics (`ToString`).
+* For **pure** functions with custom types, implement **`IComparable`**.
 * Avoid global `mut`; if necessary, **isolate in `unsafe`** with rationale.
 * Keep names **PascalCase** for classes/functions/methods; keep **keywords lowercase**.
 * `String` and all array classes are **reference (non-primitive)** types.
-
----
-
-*© Ovum Project. Licensed under GNU GPLv3 (see separate LICENSE).*
