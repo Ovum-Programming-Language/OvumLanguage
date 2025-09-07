@@ -1,6 +1,9 @@
 # Ovum Programming Language
 
-> This README (for `.ovum` sources) describes **Ovum**: syntax & semantics, nullable types, formal EBNF grammar, lexer & parser rules, runtime & VM requirements, unsafe operations, casting, functional objects, and code examples (snippets + a complete program).
+This README (for `.ovum` sources) describes **Ovum**: syntax & semantics, nullable types, formal EBNF grammar, lexer & parser rules, runtime & VM requirements, unsafe operations, casting, functional objects, and code examples (snippets + a complete program).
+
+If you want to contribute to the project, please read the [CONTRIBUTING.md](./CONTRIBUTING.md) file.
+If you want to build the project, please read the [BUILD.md](./BUILD.md) file.
 
 ---
 
