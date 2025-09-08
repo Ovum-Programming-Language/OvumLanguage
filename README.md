@@ -327,7 +327,7 @@ fun Main(args: StringArray): Int {
 
 ---
 
-## 6) Formal Grammar (EBNF)
+## 7) Formal Grammar (EBNF)
 
 > Core EBNF; whitespace/comments omitted. Operator precedence in §7.
 
@@ -437,7 +437,7 @@ Literal         ::= NumberLiteral | StringLiteral | CharLiteral | "true" | "fals
 
 ---
 
-## 7) Expressions and Operators
+## 8) Expressions and Operators
 
 Expressions in Ovum include literal values, variable references, function calls, method calls, field accesses, and combinations of these with operators. Operator syntax and precedence are designed to be familiar to C/Java/Kotlin developers.
 
@@ -494,7 +494,7 @@ Programmers cannot create new operator symbols or overload the existing ones for
 
 ---
 
-## 8) Lexer & Parser Rules
+## 9) Lexer & Parser Rules
 
 ### Tokens
 
@@ -534,7 +534,7 @@ Programmers cannot create new operator symbols or overload the existing ones for
 
 ---
 
-## 9) Memory Management and Runtime
+## 10) Memory Management and Runtime, 
 
 One of Ovum's core principles is memory safety. Memory is managed by the runtime's garbage collector (GC), which automatically frees objects that are no longer in use, eliminating whole classes of bugs like dangling pointers, memory leaks, and buffer overruns.
 
@@ -559,9 +559,6 @@ One of Ovum's core principles is memory safety. Memory is managed by the runtime
 * **Architectures**: **amd64** and **arm64** supported.
 * **Numeric widths**: `Int` **8 bytes**, `Float` **8 bytes**.
 
----
-
-## 10) Runtime and Execution Model
 
 The Ovum compiler translates Ovum source code into Ovum bytecode or an intermediate representation, which is executed on the Ovum Virtual Machine (OVM). The OVM provides a sandboxed, platform-independent environment for Ovum programs.
 
