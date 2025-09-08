@@ -1,11 +1,13 @@
 # Code Examples
 
+Here are some code examples to help you get started with Ovum.
+
 ## 1) Entry point (`StringArray`)
 
 ```ovum
 // .ovum file
 fun Main(args: StringArray): Int {
-    val count: Int = args.Length() ?: 0
+    val count: Int = args.Length()
     sys::Print("Args count: " + count.ToString())
     return 0
 }
@@ -102,14 +104,15 @@ pure fun Fib(n: Int): Int {
 ```ovum
 fun DemoCasts(obj: Object): Void {
     if (obj is Point) {
-        val p: Point = (obj as Point)!!   // nullable cast + assert
+        val p: Point = (obj as Point)!!         // nullable cast + assert
         sys::Print(p.ToString())
     }
 
     // Bool cast
-    val b1: Bool = (0 as Bool)      // false
-    val b2: Bool = (42 as Bool)     // true
-    val b3: Bool = (obj as Bool)    // true if non-null
+    val b1: Bool = (0 as Bool)                  // false
+    val b2: Bool = (42 as Bool)                 // true
+    val b3: Bool = (obj as Bool)                // always true
+    val b4: Bool = ((obj as Point) as Bool)     // true if obj is a Point
 
     // Unsafe: raw byte views
     unsafe {
@@ -134,12 +137,12 @@ class DefinedFunctional {
         return this
     }
 
-    public call(secondMultiplier: Int): Int = pure fun(secondMultiplier: Int): Int {
+    public call(secondMultiplier: Int): Int = fun(secondMultiplier: Int): Int {
         return Multiplier * secondMultiplier
     }
 }
 
-val AddNullable: CustomFunctional = fun(a: Int?, b: Int?): Int {
+val AddNullable: CustomFunctional = pure fun(a: Int?, b: Int?): Int {
     return (a ?: 0) + (b ?: 0)
 }
 
@@ -192,7 +195,7 @@ fun DemoUnsafeOperations(): Void {
         // Pointer operations (unsafe)
         val obj: Point = Point(10, 20)
         val ptr: Pointer = &obj  // address-of
-        val deref: Point = *ptr  // dereference
+        val deref: Object = *ptr  // dereference to Object, Pointer is not typed
         
         // ByteArray casting (unsafe)
         val bytes: ByteArray = (obj as ByteArray)
