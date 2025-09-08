@@ -39,6 +39,8 @@
 * Namespace resolution with `::` (e.g., `sys::Print`).
 * Preprocessor: `#import`, `#define`, `#ifdef`, `#ifndef`, `#else`, `#undef`.
 
+> **Note**: `#define` cannot be used to really define something, it is a way to control what code will be used.
+
 ## Functional Objects (`call`)
 
 * Classes or interfaces can declare a **special `call`** member that makes instances **callable** like functions.
@@ -62,12 +64,12 @@ class DefinedFunctional {
     }
 
     // Defines the callable behavior; pure body allowed
-    public call(secondMultiplier: Int): Int = pure fun(secondMultiplier: Int): Int {
+    public call(secondMultiplier: Int): Int = fun(secondMultiplier: Int): Int {
         return Multiplier * secondMultiplier
     }
 }
 
-val AddNullable: CustomFunctional = fun(a: Int?, b: Int?): Int {
+val AddNullable: CustomFunctional = pure fun(a: Int?, b: Int?): Int {
     return (a ?: 0) + (b ?: 0)
 }
 
