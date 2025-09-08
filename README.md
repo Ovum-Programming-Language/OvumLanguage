@@ -24,7 +24,7 @@ Ovum's core design principles center around:
 
 ### Key Design Points
 
-* **Strong static typing** with **immutability by default** (`mut` required for mutation).
+* **Strong static typing** with **immutability by default** (`var` required for mutation).
 * **Nullable types** and Kotlin-style null-handling: `Type?`, safe calls `?.`, Elvis `?:`, non-null assertion `!!`.
 * **Pure functions** (no side effects, VM-level result caching).
 * **Classes & interfaces**
@@ -35,7 +35,7 @@ Ovum's core design principles center around:
   * Interface methods are **public** and **virtual** by default.
   * Class methods implementing interface members must be marked `override`.
   * **Access modifiers are mandatory** for all fields and methods in classes (`public`/`private`).
-  * **Fields use `let` (immutable) or `mut` (mutable)**.
+  * **Fields use `val` (immutable) or `var` (mutable)**.
 * **Namespaces** with `::` resolution (e.g., `sys::Print`).
 * **Built-in operators**; **no user-defined operators**.
 * **Preprocessor**: `#import`, `#define`, `#ifdef`, `#ifndef`, `#else`, `#undef`.
@@ -56,7 +56,7 @@ Ovum's core design principles center around:
     * Required for user-defined types used as parameters to **pure** functions (stable ordering/keys).
   * **`IHashable`** — `GetHash(): Int`
 
-> **Naming**: **Classes, functions, methods use PascalCase** (e.g., `Main`, `ToString`, `IsLess`). Keywords/modifiers remain lowercase (`class`, `interface`, `mut`, `override`, `pure`, `unsafe`, etc.).
+> **Naming**: **Classes, functions, methods use PascalCase** (e.g., `Main`, `ToString`, `IsLess`). Keywords/modifiers remain lowercase (`class`, `interface`, `var`, `override`, `pure`, `unsafe`, etc.).
 
 ---
 
@@ -88,7 +88,7 @@ Ovum has a rich type system with primitive types and user-defined types. The typ
 
 * **Primitive types**: passed by value (copied)
 * **Reference types**: all user-defined and non-primitive types (including `String` and all arrays) are **passed by reference** (const by default)
-* **Immutability**: By default, references are considered immutable (the function cannot rebind them or mutate the object's content unless allowed via `mut`)
+* **Immutability**: By default, references are considered immutable (the function cannot rebind them or mutate the object's content unless allowed via `var`)
 
 ### Type System Characteristics
 
@@ -107,11 +107,11 @@ Ovum's source code uses a lexical syntax familiar to C-style and Kotlin-style la
 
 Names for variables, functions, classes, etc., consist of letters, digits, and underscores, and must not begin with a digit. For example: `myVar`, `compute_sum`, `GraphNode`. Identifiers are case-sensitive.
 
-**Naming Convention**: Classes, functions, methods use **PascalCase** (e.g., `Main`, `ToString`, `IsLess`). Keywords/modifiers remain lowercase (`class`, `interface`, `mut`, `override`, `pure`, `unsafe`, etc.).
+**Naming Convention**: Classes, functions, methods use **PascalCase** (e.g., `Main`, `ToString`, `IsLess`). Keywords/modifiers remain lowercase (`class`, `interface`, `var`, `override`, `pure`, `unsafe`, etc.).
 
 ### Keywords
 
-Ovum reserves certain words like `fun`, `class`, `interface`, `mut`, `override`, `pure`, `if`, `else`, `for`, `while`, `return`, `unsafe`, `let`, `static`, `public`, `private`, `implements`, `as`, `is`, `null`, `true`, `false`, etc. These cannot be used as identifiers.
+Ovum reserves certain words like `fun`, `class`, `interface`, `var`, `override`, `pure`, `if`, `else`, `for`, `while`, `return`, `unsafe`, `val`, `static`, `public`, `private`, `implements`, `as`, `is`, `null`, `true`, `false`, etc. These cannot be used as identifiers.
 
 ### Literals
 
@@ -205,7 +205,7 @@ if (x > 0) {
 **While Loop**: `while (condition) { ... }` repeats the body while the condition is true.
 
 ```ovum
-mut i: Int = 0
+var i: Int = 0
 while (i < 10) {
     sys::Print(i.ToString())
     i = i + 1
@@ -227,7 +227,7 @@ for (item in items) {
 **Break/Continue**: `break` exits a loop immediately, `continue` skips to the next iteration of the loop.
 
 ```ovum
-mut i: Int = 0
+var i: Int = 0
 while (i < 10) {
     if (i == 5) {
         break  // Exit loop
@@ -261,14 +261,14 @@ All control flow follows structured programming principles (no `goto`).
 
   * **No class inheritance**.
   * **Access modifiers are mandatory** on fields and methods.
-  * **Fields** use `let` (immutable) or `mut` (mutable):
+  * **Fields** use `val` (immutable) or `var` (mutable):
 
-    * `private let Prefix: String`
-    * `public  mut Count: Int`
+    * `private val Prefix: String`
+    * `public  var Count: Int`
   * **Methods** must declare access and can be `override`/`pure`:
 
     * `public override fun Run(): Int { ... }`
-  * **Static** fields supported; **writing `static mut` is unsafe**.
+  * **Static** fields supported; **writing `static var` is unsafe**.
   * **Destructor**: optional, overrides the implicit virtual destructor from `Object`.
 
     * Syntax: `public destructor(): Void { ... }` (no parameters, no return).
@@ -301,7 +301,7 @@ interface CustomFunctional {
 }
 
 class DefinedFunctional {
-    public mut Multiplier: Int
+    public var Multiplier: Int
 
     public fun DefinedFunctional(multiplier: Int): DefinedFunctional {
         this.Multiplier = multiplier
@@ -314,7 +314,7 @@ class DefinedFunctional {
     }
 }
 
-let AddNullable: CustomFunctional = fun(a: Int?, b: Int?): Int {
+val AddNullable: CustomFunctional = fun(a: Int?, b: Int?): Int {
     return (a ?: 0) + (b ?: 0)
 }
 
@@ -345,26 +345,30 @@ GlobalDef       ::= FunctionDecl | ClassDecl | InterfaceDecl | GlobalVarDecl ;
 
 FunctionDecl    ::= [ "pure" ] "fun" Identifier "(" [ ParamList ] ")" [ ":" Type ] Block ;
 ParamList       ::= Parameter { "," Parameter } ;
-Parameter       ::= [ "mut" ] Identifier ":" Type ;
+Parameter       ::= [ "var" ] Identifier ":" Type ;
 
 ClassDecl       ::= "class" Identifier [ "implements" TypeList ] ClassBody ;
 TypeList        ::= Type { "," Type } ;
 ClassBody       ::= "{" { ClassMember } "}" ;
-ClassMember     ::= FieldDecl | StaticFieldDecl | MethodDecl | DestructorDecl ;
+ClassMember     ::= FieldDecl | StaticFieldDecl | MethodDecl | DestructorDecl | CallDecl ;
 
-FieldDecl       ::= ( "private" | "public" ) ( "let" | "mut" ) Identifier ":" Type [ "=" Expression ] ";" ;
-StaticFieldDecl ::= "static" ( "private" | "public" ) ( "let" | "mut" ) Identifier ":" Type [ "=" Expression ] ";" ;
+FieldDecl       ::= ( "private" | "public" ) ( "val" | "var" ) Identifier ":" Type [ "=" Expression ] ";" ;
+StaticFieldDecl ::= "static" ( "private" | "public" ) ( "val" | "var" ) Identifier ":" Type [ "=" Expression ] ";" ;
 
 MethodDecl      ::= ( "private" | "public" ) [ "override" ] [ "pure" ]
                     "fun" Identifier "(" [ ParamList ] ")" [ ":" Type ] ( Block | ";" ) ;
 
+CallDecl        ::= ( "private" | "public" ) "call" "(" [ ParamList ] ")" [ ":" Type ] ( Block | ";" ) ;
+
 DestructorDecl  ::= ( "private" | "public" ) "destructor" "(" ")" ":" "Void" Block ;
 
 InterfaceDecl   ::= "interface" Identifier InterfaceBody ;  // implicitly extends Object
-InterfaceBody   ::= "{" { InterfaceMethod } "}" ;
+InterfaceBody   ::= "{" { InterfaceMember } "}" ;
+InterfaceMember ::= InterfaceMethod | InterfaceCall ;
 InterfaceMethod ::= "fun" Identifier "(" [ ParamList ] ")" [ ":" Type ] ";" ;  // public & virtual
+InterfaceCall   ::= "call" "(" [ ParamList ] ")" [ ":" Type ] ";" ;  // public & virtual
 
-GlobalVarDecl   ::= [ "mut" ] Identifier ":" Type "=" Expression ";" ;
+GlobalVarDecl   ::= [ "var" ] Identifier ":" Type "=" Expression ";" ;
 
 Type            ::= NullableType | NonNullType ;
 NullableType    ::= NonNullType "?" ;
@@ -380,7 +384,7 @@ PrimitiveType   ::= "Int" | "Float" | "Bool" | "Char" | "Byte" | "Pointer" ;
 Block           ::= "{" { Statement } "}" ;
 Statement       ::= VarDeclStmt | ExprStmt | ReturnStmt | IfStmt | WhileStmt | ForStmt | UnsafeStmt | Block ;
 
-VarDeclStmt     ::= [ "mut" ] Identifier ":" Type "=" Expression ";" ;
+VarDeclStmt     ::= [ "var" ] Identifier ":" Type "=" Expression ";" ;
 ExprStmt        ::= Expression ";" ;
 ReturnStmt      ::= "return" [ Expression ] ";" ;
 IfStmt          ::= "if" "(" Expression ")" Statement [ "else" Statement ] ;
@@ -408,11 +412,12 @@ UnaryExpr       ::= ("!" | "-" | "&" | "*") UnaryExpr
 Postfix         ::= Primary { PostfixOp } ;
 PostfixOp       ::= "." Identifier
                  | "." Identifier "(" [ ArgList ] ")"
-                 | "(" [ ArgList ] ")"          // function call or callable object
+                 | "(" [ ArgList ] ")"          // function call or callable object call
                  | "as" Type                    // explicit cast; downcast yields nullable type
                  | "is" Type                    // type test → Bool
                  | "!!"                         // non-null assertion
                  | "?." Identifier [ "(" [ ArgList ] ")" ]  // safe call chain
+                 | "?." "(" [ ArgList ] ")"     // safe callable object call
                  ;
 
 Primary         ::= Identifier
@@ -528,7 +533,7 @@ Programmers cannot create new operator symbols or overload the existing ones for
 
 ---
 
-## 8) Memory Management and Runtime
+## 9) Memory Management and Runtime
 
 One of Ovum's core principles is memory safety. Memory is managed by the runtime's garbage collector (GC), which automatically frees objects that are no longer in use, eliminating whole classes of bugs like dangling pointers, memory leaks, and buffer overruns.
 
@@ -555,7 +560,7 @@ One of Ovum's core principles is memory safety. Memory is managed by the runtime
 
 ---
 
-## 9) Runtime and Execution Model
+## 10) Runtime and Execution Model
 
 The Ovum compiler translates Ovum source code into Ovum bytecode or an intermediate representation, which is executed on the Ovum Virtual Machine (OVM). The OVM provides a sandboxed, platform-independent environment for Ovum programs.
 
@@ -590,7 +595,7 @@ The Ovum compiler translates Ovum source code into Ovum bytecode or an intermedi
 
 ---
 
-## 10) System Library & Interop
+## 11) System Library & Interop
 
 * `sys::Print(msg: String): Void`
 * `sys::Time(): Int`
@@ -605,11 +610,11 @@ The Ovum compiler translates Ovum source code into Ovum bytecode or an intermedi
 
 ---
 
-## 11) Unsafe Operations (Recap)
+## 12) Unsafe Operations (Recap)
 
 Allowed **only** inside `unsafe { ... }`:
 
-* Declaring/writing **global `mut`** variables and **`static mut`** fields.
+* Declaring/writing **global `var`** variables and **`static var`** fields.
 * Casting const → mutable.
 * Using **`Pointer`**, address-of and dereference.
 * **Manual destructor** calls.
@@ -618,9 +623,9 @@ Allowed **only** inside `unsafe { ... }`:
 
 ---
 
-## 12) Code Examples
+## 13) Code Examples
 
-### 12.1 Entry point (`StringArray`)
+### 13.1 Entry point (`StringArray`)
 
 ```ovum
 // .ovum file
@@ -631,7 +636,7 @@ fun Main(args: StringArray): Int {
 }
 ```
 
-### 12.2 Variables, Nulls, Elvis, Safe Calls
+### 13.2 Variables, Nulls, Elvis, Safe Calls
 
 ```ovum
 fun DemoNulls(): Void {
@@ -649,7 +654,7 @@ fun DemoNulls(): Void {
 }
 ```
 
-### 12.3 Interfaces, Classes, Fields, Overrides
+### 13.3 Interfaces, Classes, Fields, Overrides
 
 ```ovum
 interface IGreeter {
@@ -657,8 +662,8 @@ interface IGreeter {
 }
 
 class FriendlyGreeter implements IGreeter {
-    private let Prefix: String = "Hello"
-    public  mut Suffix: String = "!"
+    private val Prefix: String = "Hello"
+    public  var Suffix: String = "!"
 
     public fun FriendlyGreeter(prefix: String, suffix: String): FriendlyGreeter {
         this.Prefix = prefix
@@ -677,7 +682,7 @@ class FriendlyGreeter implements IGreeter {
 }
 ```
 
-### 12.4 Standard Interfaces (`IStringConvertible`, `IComparable`, `IHashable`)
+### 13.4 Standard Interfaces (`IStringConvertible`, `IComparable`, `IHashable`)
 
 ```ovum
 interface IStringConvertible { fun ToString(): String }
@@ -685,8 +690,8 @@ interface IComparable        { fun IsLess(other: Object): Bool }
 interface IHashable          { fun GetHash(): Int }
 
 class Point implements IStringConvertible, IComparable, IHashable {
-    public let X: Int
-    public let Y: Int
+    public val X: Int
+    public val Y: Int
 
     public fun Point(x: Int, y: Int): Point { this.X = x; this.Y = y; return this; }
 
@@ -707,7 +712,7 @@ class Point implements IStringConvertible, IComparable, IHashable {
 }
 ```
 
-### 12.5 Pure Functions with Caching
+### 13.5 Pure Functions with Caching
 
 ```ovum
 pure fun Fib(n: Int): Int {
@@ -717,7 +722,7 @@ pure fun Fib(n: Int): Int {
 // For user-defined reference types as parameters, implement IComparable.
 ```
 
-### 12.6 `is`, `as`, `!!`, and ByteArray Casts
+### 13.6 `is`, `as`, `!!`, and ByteArray Casts
 
 ```ovum
 fun DemoCasts(obj: Object): Void {
@@ -734,12 +739,12 @@ fun DemoCasts(obj: Object): Void {
     // Unsafe: raw byte views
     unsafe {
         val bytesConst: ByteArray = (obj as ByteArray)
-        val bytesMut  : ByteArray = (obj as mut ByteArray)
+        val bytesMut  : ByteArray = (obj as var ByteArray)
     }
 }
 ```
 
-### 12.7 Functional Objects (`call`) & Literals
+### 13.7 Functional Objects (`call`) & Literals
 
 ```ovum
 interface CustomFunctional {
@@ -747,7 +752,7 @@ interface CustomFunctional {
 }
 
 class DefinedFunctional {
-    public mut Multiplier: Int
+    public var Multiplier: Int
 
     public fun DefinedFunctional(multiplier: Int): DefinedFunctional {
         this.Multiplier = multiplier
@@ -759,7 +764,7 @@ class DefinedFunctional {
     }
 }
 
-let AddNullable: CustomFunctional = fun(a: Int?, b: Int?): Int {
+val AddNullable: CustomFunctional = fun(a: Int?, b: Int?): Int {
     return (a ?: 0) + (b ?: 0)
 }
 
@@ -768,11 +773,11 @@ fun Main(args: StringArray): Int {
 }
 ```
 
-### 12.8 Control Flow Examples
+### 13.8 Control Flow Examples
 
 ```ovum
 fun DemoControlFlow(): Void {
-    mut i: Int = 0
+    var i: Int = 0
     
     // While loop with break and continue
     while (i < 10) {
@@ -788,7 +793,7 @@ fun DemoControlFlow(): Void {
     }
     
     // For loop over array
-    let numbers: IntArray = IntArray(3)
+    val numbers: IntArray = IntArray(3)
     numbers[0] = 10
     numbers[1] = 20
     numbers[2] = 30
@@ -799,34 +804,34 @@ fun DemoControlFlow(): Void {
 }
 ```
 
-### 12.9 Memory Management and Unsafe Operations
+### 13.9 Memory Management and Unsafe Operations
 
 ```ovum
 fun DemoUnsafeOperations(): Void {
     // Unsafe block for low-level operations
     unsafe {
         // Global mutable state (unsafe)
-        static mut globalCounter: Int = 0
+        static var globalCounter: Int = 0
         globalCounter = globalCounter + 1
         
         // Pointer operations (unsafe)
-        let obj: Point = Point(10, 20)
-        let ptr: Pointer = &obj  // address-of
-        let deref: Point = *ptr  // dereference
+        val obj: Point = Point(10, 20)
+        val ptr: Pointer = &obj  // address-of
+        val deref: Point = *ptr  // dereference
         
         // ByteArray casting (unsafe)
-        let bytes: ByteArray = (obj as ByteArray)
-        let mutableBytes: ByteArray = (obj as mut ByteArray)
+        val bytes: ByteArray = (obj as ByteArray)
+        val mutableBytes: ByteArray = (obj as var ByteArray)
         
         // Foreign function interface (unsafe)
-        let input: ByteArray = "Hello".ToUtf8Bytes()
-        let output: ByteArray = ByteArray(4)
-        let result: Int = sys::Interope("libc.so", "strlen", input, output)
+        val input: ByteArray = "Hello".ToUtf8Bytes()
+        val output: ByteArray = ByteArray(4)
+        val result: Int = sys::Interope("libc.so", "strlen", input, output)
     }
 }
 ```
 
-### 12.10 Complete Program Example
+### 13.10 Complete Program Example
 
 ```ovum
 // Complete Ovum program demonstrating key features
@@ -847,7 +852,7 @@ class Multiplier implements ICalculator {
 }
 
 pure fun ProcessNumbers(calc: ICalculator, numbers: IntArray): Int {
-    mut result: Int = 0
+    var result: Int = 0
     for (num in numbers) {
         result = result + calc.Calculate(num, 2)
     }
@@ -855,16 +860,16 @@ pure fun ProcessNumbers(calc: ICalculator, numbers: IntArray): Int {
 }
 
 fun Main(args: StringArray): Int {
-    let numbers: IntArray = IntArray(3)
+    val numbers: IntArray = IntArray(3)
     numbers[0] = 5
     numbers[1] = 10
     numbers[2] = 15
     
-    let adder: ICalculator = Adder()
-    let multiplier: ICalculator = Multiplier()
+    val adder: ICalculator = Adder()
+    val multiplier: ICalculator = Multiplier()
     
-    let sumResult: Int = ProcessNumbers(adder, numbers)
-    let productResult: Int = ProcessNumbers(multiplier, numbers)
+    val sumResult: Int = ProcessNumbers(adder, numbers)
+    val productResult: Int = ProcessNumbers(multiplier, numbers)
     
     sys::Print("Sum result: " + sumResult.ToString())
     sys::Print("Product result: " + productResult.ToString())
@@ -875,7 +880,7 @@ fun Main(args: StringArray): Int {
 
 ---
 
-## 13) Build & Run (Conceptual)
+## 14) Build & Run (Conceptual)
 
 1. **Compile** `.ovum` sources → Ovum bytecode (preprocessor applied).
 2. **Execute** on the Ovum VM (single-threaded):
@@ -886,11 +891,11 @@ fun Main(args: StringArray): Int {
 
 ---
 
-## 14) Notes & Best Practices
+## 15) Notes & Best Practices
 
-* Prefer **immutable** data; use `mut` only when necessary.
+* Prefer **immutable** data; use `var` only when necessary.
 * Implement **`IStringConvertible`** for diagnostics (`ToString`).
 * For **pure** functions with custom types, implement **`IComparable`**.
-* Avoid global `mut`; if necessary, **isolate in `unsafe`** with rationale.
+* Avoid global `var`; if necessary, **isolate in `unsafe`** with rationale.
 * Keep names **PascalCase** for classes/functions/methods; keep **keywords lowercase**.
 * `String` and all array classes are **reference (non-primitive)** types.
