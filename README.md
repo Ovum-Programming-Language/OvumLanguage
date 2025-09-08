@@ -78,8 +78,8 @@ Ovum has a rich type system with primitive types and user-defined types. The typ
 ### Non-Primitive / Reference Types
 
 * `String` *(reference type; not primitive)* - text data
+* *Nullable* `Int?` (and all other primitive types) - `Int` or `null` - also passed by reference
 * **Array classes (no templates / generics):**
-
   * For primitives: `IntArray`, `FloatArray`, `BoolArray`, `CharArray`, `ByteArray`, `PointerArray`
   * For objects: **`ObjectArray`**
   * **Convenience**: `StringArray` (array of `String`, used for `Main`)
