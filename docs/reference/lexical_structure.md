@@ -10,7 +10,7 @@ Names for variables, functions, classes, etc., consist of letters, digits, and u
 
 ## Keywords
 
-Ovum reserves certain words like `fun`, `class`, `interface`, `var`, `override`, `pure`, `if`, `else`, `for`, `while`, `return`, `unsafe`, `val`, `static`, `public`, `private`, `implements`, `as`, `is`, `null`, `true`, `false`, etc. These cannot be used as identifiers.
+Ovum reserves certain words like `fun`, `class`, `interface`, `var`, `override`, `pure`, `if`, `else`, `for`, `while`, `return`, `unsafe`, `val`, `static`, `public`, `private`, `implements`, `as`, `is`, `null`, `true`, `false`, `typealias`, `destructor`, `call`, etc. These cannot be used as identifiers.
 
 ## Literals
 
@@ -54,7 +54,7 @@ Conditional     ::= "#ifdef" Identifier { GlobalDef | Import | Conditional }
                  | "#ifndef" Identifier { GlobalDef | Import | Conditional }
                     [ "#else" { GlobalDef | Import | Conditional } ] "#endif" ;
 
-GlobalDef       ::= FunctionDecl | ClassDecl | InterfaceDecl | GlobalVarDecl ;
+GlobalDef       ::= FunctionDecl | ClassDecl | InterfaceDecl | GlobalVarDecl | TypeAliasDecl ;
 
 FunctionDecl    ::= [ "pure" ] "fun" Identifier "(" [ ParamList ] ")" [ ":" Type ] Block ;
 ParamList       ::= Parameter { "," Parameter } ;
@@ -82,6 +82,8 @@ InterfaceMethod ::= "fun" Identifier "(" [ ParamList ] ")" [ ":" Type ] ";" ;  /
 InterfaceCall   ::= "call" "(" [ ParamList ] ")" [ ":" Type ] ";" ;  // public & virtual
 
 GlobalVarDecl   ::= [ "var" ] Identifier ":" Type "=" Expression ";" ;
+
+TypeAliasDecl   ::= "typealias" Identifier "=" Type ";" ;
 
 Type            ::= NullableType | NonNullType ;
 NullableType    ::= NonNullType "?" ;

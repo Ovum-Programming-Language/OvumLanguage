@@ -28,6 +28,8 @@ Ovum's core design principles center around:
   * **Access modifiers are mandatory** for all fields and methods in classes (`public`/`private`).
   * **Fields use `val` (immutable) or `var` (mutable)**.
 * **Namespaces** with `::` resolution (e.g., `sys::Print`).
+* **Functional objects** (`call` member) for functional programming.
+* **Type aliases** (`typealias` keyword) for better readability.
 * **Built-in operators**; **no user-defined operators**.
 * **Preprocessor**: `#import`, `#define`, `#ifdef`, `#ifndef`, `#else`, `#undef`.
 * **Managed runtime**: VM with **JIT** and **GC**; **no manual memory management**.

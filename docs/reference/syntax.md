@@ -4,7 +4,6 @@
 
 * Declared with `fun`, PascalCase names: `fun Compute(a: Int): Int { ... }`
 * **Pure** functions: `pure fun Hash(o: Object): Int { ... }`
-
   * Side-effect free; VM may cache results.
   * If parameters include user-defined reference types, those types must implement **`IComparable`**.
 
@@ -33,6 +32,11 @@
 
   * Methods are **public** and **virtual** by default.
   * No fields, no bodies.
+
+## Type Aliases
+
+* Create type aliases for better readability: `typealias UserId = Int`
+* Can be used anywhere a type is expected: `fun ProcessUser(id: UserId): Void`
 
 ## Namespaces & Preprocessor
 

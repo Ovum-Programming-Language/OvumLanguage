@@ -182,7 +182,7 @@ fun DemoControlFlow(): Void {
 }
 ```
 
-## 9) Memory Management and Unsafe Operations
+## 9) Unsafe Operations
 
 ```ovum
 fun DemoUnsafeOperations(): Void {
@@ -209,7 +209,74 @@ fun DemoUnsafeOperations(): Void {
 }
 ```
 
-## 10) Complete Program Example
+## 10) Type Aliases
+
+```ovum
+// Define type aliases for better readability
+typealias UserId = Int
+typealias UserName = String
+typealias UserList = ObjectArray
+
+class User {
+    public val Id: UserId
+    public val Name: UserName
+    
+    public fun User(id: UserId, name: UserName): User {
+        this.Id = id
+        this.Name = name
+        return this
+    }
+}
+
+fun ProcessUsers(users: UserList): Void {
+    for (i in 0..users.Length()) {
+        val user: User = (users[i] as User)!!
+        sys::Print("User " + user.Id.ToString() + ": " + user.Name)
+    }
+}
+```
+
+
+## 11) Memory Management and Destructors
+
+```ovum
+class DatabaseConnection {
+    private val ConnectionId: Int
+    private val IsConnected: Bool
+    
+    public fun DatabaseConnection(id: Int): DatabaseConnection {
+        this.ConnectionId = id
+        this.IsConnected = true
+        // Establish database connection
+        return this
+    }
+    
+    public fun Query(sql: String): String {
+        if (!IsConnected) return "Not connected"
+        // Execute query
+        return "Query result"
+    }
+    
+    // Destructor called automatically by GC
+    public destructor(): Void {
+        if (IsConnected) {
+            // Close database connection
+            sys::Print("Closing connection " + ConnectionId.ToString())
+        }
+    }
+}
+
+fun DemoMemoryManagement(): Void {
+    val db: DatabaseConnection = DatabaseConnection(1)
+    val result: String = db.Query("SELECT * FROM users")
+    sys::Print("Query result: " + result)
+    
+    // db will be garbage collected automatically
+    // destructor will be called by GC
+}
+```
+
+## 12) Complete Program Example
 
 ```ovum
 // Complete Ovum program demonstrating key features

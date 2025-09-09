@@ -19,7 +19,6 @@ This page contains the Ovum language reference.
 
 ## Type system
 
-* [Primitive types](./primitive_types.md)
 * [Object model](./object_model.md)
 * [Nullable types](./nullable.md)
 
