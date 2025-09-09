@@ -1,33 +1,32 @@
-# Базовая структура репозитория
+# Base Repository Structure
 
-## Назначение директорий
+## Directory Purposes
 
-### Корневая директория
-- **Документация проекта** - README, инструкции по сборке, руководства для разработчиков
-- **Конфигурация сборки** - CMakeLists.txt, вспомогательные CMake-скрипты
-- **Настройки инструментов** - конфигурации для форматирования, линтеров, Git
-- **Скрипты автоматизации** - установка зависимостей, подготовка окружения
+### Root Directory
+- **Project documentation** — README, build instructions, developer guides
+- **Build configuration** — `CMakeLists.txt`, auxiliary CMake scripts
+- **Tooling settings** — configurations for formatting, linters, Git
+- **Automation scripts** — dependency installation, environment setup
 
-### bin/
-- **Исполняемые файлы** - точка входа приложения
-- **CLI-интерфейс** - командная строка для взаимодействия с пользователем
+### `bin/`
+- **Executables** — application entry point
+- **CLI interface** — command line for user interaction
 
-### docs/
-- **Документация проекта** - README, инструкции по сборке, руководства для разработчиков
+### `docs/`
+- **Project documentation** — README, build instructions, developer guides
 
-### lib/
-- **Основная библиотека** - ядро функциональности проекта
-- **UI-модуль** - пользовательский интерфейс и CLI-утилиты
-- **Общие компоненты** - переиспользуемые части кода. Добавляйте новые модули только в эту директорию.
+### `lib/`
+- **Core library** — the project's core functionality
+- **UI module** — user interface and CLI utilities
+- **Shared components** — reusable code parts. Add new modules only under this directory.
 
-### tests/
-- **Модульные тесты** - тестирование отдельных компонентов
-- **Интеграционные тесты** - тестирование взаимодействия между модулями
-- **Вспомогательные функции** - утилиты для тестирования
-- **Тестовые данные** - примеры и фикстуры для тестов
+### `tests/`
+- **Unit tests** — testing individual components
+- **Integration tests** — testing interactions between modules
+- **Helper functions** — utilities for testing
+- **Test data** — examples and fixtures for tests
 
-### .github/workflows/
-- **CI/CD конфигурация** - автоматическая сборка и тестирование
-- **Проверки качества кода** - статический анализ, форматирование
-- **Развертывание** - автоматическая публикация релизов
-
+### `.github/workflows/`
+- **CI/CD configuration** — automated build and testing
+- **Code quality checks** — static analysis, formatting
+- **Deployment** — automated release publishing

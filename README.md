@@ -16,6 +16,7 @@ Ovum is a strongly statically typed, single-threaded language focused on safety,
 - Interface-based polymorphism; no class inheritance.
 - Explicit `unsafe { ... }` for low-level operations.
 - Minimal, predictable syntax; no user-defined operators.
+- No generics/templates, only ad-hoc and subclass polymorphism.
 
 ---
 

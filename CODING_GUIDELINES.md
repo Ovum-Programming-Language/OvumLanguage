@@ -1,16 +1,16 @@
 # Style guide
 
-В этом документе будут собраны все примеры правильного форматирования кода нашего проекта.
+This document collects all examples of correct code formatting for our project.
 
-В основном следует придерживаться [Google Code Style](https://google.github.io/styleguide/cppguide.html). 
-При противоречии стоит придерживаться этого документа.
-Есть файл [ClangFormat](.clang-format), который можно использовать для автоматического форматирования кода.
+Primarily follow the Google Code Style: https://google.github.io/styleguide/cppguide.html.
+If there is any conflict, follow this document.
+There is a ClangFormat file (.clang-format) you can use for automatic formatting.
 
-### 1. Максимальная длина строки кода — 80 символов.
+### 1. Maximum line length — 80 characters.
 
-### 2. Используем пробелы, не табы. Настройте в своей среде разработки на 2 пробела.
+### 2. Use spaces, not tabs. Configure your editor for 2 spaces.
 
-### 3. Пишем названия переменных, используя snake_case, а для названий функций — PascalCase:
+### 3. Use snake_case for variable names, and PascalCase for function names:
 
 ```c++
 int32_t MakingSomeStuff() {
@@ -24,11 +24,11 @@ int main() {
 }
 ```
 
-**НО!** Когда речь идёт о названии классов/перечислений/структур/etc, мы используем PascalCase.
+BUT! When it comes to class/enum/struct/etc names, use PascalCase.
 
-**При этом!** Если мы создаем объект класса, мы используем snake_case. 
-Если это приватное или защищенное поле — ставим нижнее подчеркивание в конце.
-Константы пишем в PascalCase, но с префиксом `k`.
+At the same time, when creating an object of a class, use snake_case.
+If it’s a private or protected field, append a trailing underscore.
+Constants use PascalCase with a `k` prefix.
 
 ```c++
 class SomeClass {
@@ -55,16 +55,16 @@ struct UsersData {
 }
 ```
 
-### 4. Используем тип фиксированной длины. Например, `int32_t` вместо `int`, `uint64_t` вместо `unsigned long`.
+### 4. Use fixed-width types. For example, `int32_t` instead of `int`, `uint64_t` instead of `unsigned long`.
 
-### 5. Мы допускаем использование auto только:
-* При создании через явный вызов конструктора или ином явном указании типа
-* При tuple unpacking
+### 5. Allow `auto` only:
+- When the type is explicit (e.g., via an explicit constructor call or otherwise clearly specified)
+- For tuple unpacking
 
-**В ИНОМ СЛУЧАЕ — ИЗБЕГАЕМ**
+IN ALL OTHER CASES — AVOID
 
-### 6. Стиль скобок: 
-При создании новых классов/функций/структур/перечислений/лямбд/etc, определение и скобка на одной строке:
+### 6. Bracing style:
+When declaring new classes/functions/structs/enums/lambdas/etc, put the declaration and opening brace on the same line:
 
 ```c++
 struct TypicalExperimentData {
@@ -86,18 +86,18 @@ int main() {
 }
 ```
 
-### 7. Переводы строк:
+### 7. Blank lines:
 
-* После каждой функции, класса, структуры, перечисления, лямбды, etc.
-* До и после каждого блока кода внутри функции — всего, что обрамлено фигурными скобками, например, `for` или `if`.
-* Между переменными, если они не связаны между собой.
-* Между `#include` и кодом.
-* Перед `return` в функции.
-* Перед квалификаторами доступа в классе, кроме первого.
+- After each function, class, struct, enum, lambda, etc.
+- Before and after each code block inside a function — anything delimited by braces, e.g., `for` or `if`.
+- Between variables if they’re unrelated.
+- Between `#include` and the code.
+- Before `return` in a function.
+- Before access specifiers in a class, except the first one.
 
-*GodObject.hpp*
+GodObject.hpp
 ```c++
-class GodObject { // Обратите внимание на порядок квалификаторов доступа
+class GodObject { // Note the order of access specifiers
 public: 
   GodObject();
   ~GodObject();
@@ -113,7 +113,7 @@ private:
 }
 ```
 
-*GodObject.cpp*
+GodObject.cpp
 ```c++
 #include "GodObject.hpp"
 
@@ -136,14 +136,17 @@ int32_t GodObject::CalculateSomething() {
 }
 ```
 
-### 8. Образование названий:
+### 8. Naming:
 
-* ***Функции*** называем по их действию — например, если функция что-то "ищет": ```float FindMatrixDeterminant```
+- Functions are named by what they do — for example, if a function “finds” something:
+  ```c++
+  float FindMatrixDeterminant
+  ```
 
-Иными словами, следует использовать соответствующий глагол.
+In other words, use an appropriate verb.
 
-Например, если мы делаем игру — допустим, змейку. У нас есть пользователь и счёт. 
-В данном случае мы можем описать пользователя с помощью класса и сделать как минимум 2 публичные функции:
+For example, if we’re making a game — say, Snake. We have the user and the score.
+In this case we can describe the user with a class and create at least two public functions:
 
 ```c++
 float Player::CalculateScore() {
@@ -151,25 +154,25 @@ float Player::CalculateScore() {
 }
 ```
 
-Название должно быть, насколько это возможно, **понятным**, **коротким**, и **интуитивным** для любого человека, работающего с проектом. 
-Следует держать баланс между понятностью и длиной названия: не стоит давать названия более 20 символов и 4 слов. 
-Аббревиатуры следует применять только если они общеприняты (например, название формата данных), и при использовании писать строчными буквами.
+Names should be, as much as possible, **clear**, **short**, and **intuitive** for anyone working on the project.
+Maintain a balance between clarity and length: avoid names longer than 20 characters and 4 words.
+Use abbreviations only if they are widely accepted (for example, a data format name), and when used, write them in lowercase.
 
-* Называем переменные **нормально, то есть осмысленно**:
+- Name variables **meaningfully**:
 
 ```c++
-int a = 12; // ПЛОХО!
+int a = 12; // BAD!
 
-int drops_count = 12; // Более ли менее понятно, о чём идёт речь
+int drops_count = 12; // More or less clear what this is
 ```
 
-Никаких i, j, k, a, fizz, buzz, etc...
+No i, j, k, a, fizz, buzz, etc.
 
-Глобальные переменные не используем. 
-Если переменная используется в нескольких функциях, то она должна быть передана в качестве аргумента.
+Do not use global variables.
+If a variable is used in multiple functions, it must be passed as an argument.
 
 
-* Называем классы с помощью существительных. К примеру:
+- Name classes using nouns. For example:
 
 ```c++
 class Engine {
@@ -185,7 +188,7 @@ class AbstactMixer {
 }
 ```
 
-* Структуры называем так же, как и классы:
+- Name structs the same way as classes:
 
 ```c++
 struct List {
@@ -201,17 +204,17 @@ struct TypicalExperimentData {
 };
 ```
 
-* Концепты называем прилагательными:
+- Name concepts with adjectives:
 
 ```c++
 template <typename T>
 concept Numeric = std::is_arithmetic_v<T>;
 ```
 
-### 9. Делим логику (определение), записанную в `.cpp` и объявление функции записанное в `.hpp` соответственно
-Например:
+### 9. Separate the function declaration and its implementation between `.hpp` and `.cpp`, respectively
+For example:
 
-*main.cpp*
+main.cpp
 ```c++
 #include "my_func.hpp"
 
@@ -220,9 +223,10 @@ int main() {
   return 0;
 }
 ```
-* Используем include guards!
 
-*my_func.hpp*
+- Use include guards!
+
+my_func.hpp
 ```c++
 #ifndef MYFUNC_HPP
 #define MYFUNC_HPP
@@ -232,17 +236,17 @@ void Square(int32_t);
 #endif // MYFUNC_HPP
 ```
 
-* Про `include`: 
-  * Все внешние библиотеки подключаем через `#include <...>`, а все наши файлы через `#include "..."`.
-  * Все `include` пишем в начале файла.
-  * Все `include` пишем в алфавитном порядке.
-  * Все `include` пишем в следующем порядке, каждая категория разделяется пустой строкой: 
-    * Сначала стандартная библиотека 
-    * Затем внешние библиотеки
-    * Затем другие наши библиотеки
-    * Затем заголовочные файлы текущей библиотеки
+- About `include`:
+  - Include external libraries via `#include <...>`, and our own files via `#include "..."`.
+  - Put all `include`s at the top of the file.
+  - Write all `include`s in alphabetical order.
+  - Write all `include`s in the following sequence, with each category separated by a blank line:
+    - First the standard library
+    - Then external libraries
+    - Then other libraries of ours
+    - Then header files of the current library
 
-*my_func.cpp*
+my_func.cpp
 ```c++
 #include <iostream> 
 
@@ -257,21 +261,21 @@ int Square(int32_t a) {
 }
 ```
 
-### 10. Организация хранения исходного кода.
+### 10. Source code organization.
 
-Для хранения данных, как-либо связанных с определёнными объектами, используются классы. 
-В классах описывается модель объекта, поля, хранящие данные, и методы для взаимодействия с данным объектом. 
-При этом сначала описывается структура класса в .hpp файле, а затем описывается реализация методов в .cpp файле.
-Исключений нет, даже конструкторы считаются.
-Структуры используем только как DTO (Data Transfer Object).
+Use classes to store data associated with specific objects.
+A class describes the object model, fields that store data, and methods to interact with the object.
+First describe the class structure in the `.hpp` file, and then describe method implementations in the `.cpp` file.
+There are no exceptions — constructors count too.
+Use structs only as DTOs (Data Transfer Objects).
 
-> В отличие от Google Code Style, мы называем заголовочные файлы так же, как и классы, которые они описывают.
-> При этом файлы, которые содержат реализацию методов класса, называем так же, как и заголовочные файлы, но с расширением .cpp.
-> А вот файлы, где лежат только функции, называем в snake_case по общему назначению.
+> Unlike Google Code Style, we name header files the same as the classes they describe.
+> Files that contain class method implementations are named the same as the headers but with a `.cpp` extension.
+> Files that contain only functions are named in snake_case by general purpose.
 
-***Правило:*** один класс — один заголовочный файл.
+Rule: one class — one header file.
 
-*IdealGas.hpp*
+IdealGas.hpp
 ```c++
 class IdealGas {
 public:
@@ -290,7 +294,7 @@ private:
 };
 ```
 
-*IdealGas.cpp*
+IdealGas.cpp
 ```c++
 #include "IdealGas.hpp"
 
@@ -300,9 +304,10 @@ double IdealGas::GetP() {
   return p_;
 }
 
-// Реализация прочих методов класса
+// Implementation of the remaining class methods
 ```
-При создании экземпляров классов используются smart pointers, где это возможно (чтобы избежать утечек памяти):
+
+When creating class instances, use smart pointers where possible (to avoid memory leaks):
 
 ```c++
 #include <memory>
@@ -310,29 +315,28 @@ double IdealGas::GetP() {
 int main() {
   std::unique_ptr<IdealGas> ideal_gas;
   ideal_gas = std::make_unique<IdealGas>(10.0, 10.0, 10.0, 10.0);
-  // Использование ideal_gas
+  // Use ideal_gas
   ideal_gas = std::make_unique<IdealGas>(20.0, 20.0, 20.0, 20.0);
   
   return 0;
 }
 ```
 
-> Стараемся использовать modern C++, например, почти всегда предпочитаем `std::array<char, N>` вместо `char[N]`.
+> Aim to use modern C++; for example, almost always prefer `std::array<char, N>` over `char[N]`.
 
-#### О лямбда-функциях
+#### On lambda functions
 
-Используем лямбда-функции, когда это необходимо, но не злоупотребляем ими.
-К примеру, когда надо захватить некий контекст, или когда надо сформировать очень краткую функцию, 
-которую надо куда-то передать.
+Use lambda functions when needed, but don’t overuse them.
+For example, when you need to capture some context, or to create a very short function to pass somewhere.
 
-### 11. Организация передачи данных.
+### 11. Data passing organization.
    
-Для передачи в функции используются ссылки и указатели на экземпляры классов, описывающих объекты, с которыми происходит взаимодействие:
-* Правильно:
+To pass data to functions, use references and pointers to instances of the classes that describe the objects you interact with:
+- Correct:
 ```c++
 void SetIdealGas(std::unique_ptr<IdealGas> ideal_gas);
 ```
-* НЕПРАВИЛЬНО
+- INCORRECT
 ```c++
 void SetIdealGase(double P, double V, double N, double T, double R, double x, double y, double z, double n, double m, double t);
 ```

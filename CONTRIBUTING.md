@@ -1,41 +1,40 @@
-# Руководство по участию
+# Contributing Guide
 
-- Пополнить The Documentation Compendium довольно просто. В этом документе показано, как начать работу
+- Contributing to The Ovum Language is fairly easy. This document shows you how to get started
 
-## Общее
+## General
+- The [Codebase Structure](./CODEBASE_STRUCTURE.md) has detailed information about how the various files in this project are structured
+- Please ensure that any changes you make are in accordance with the [Coding Guidelines](./CODING_GUIDELINES.md) of this repo
 
-- [Структура кодовой базы ](./CODEBASE_STRUCTURE.md) содержит подробную информацию о том, как структурированы различные файлы в этом проекте
-- Пожалуйста, убедитесь, что любые внесенные вами изменения соответствуют [Гайдлайну по написанию кода](./CODING_GUIDELINES.md) этого репозитория
+## Submitting changes
 
-## Отправка изменений
+- Fork the repo (if you're not the maintainer)
+  - <https://github.com/Ovum-Programming-Language/OvumLanguage/fork>
+- Check out a new branch based and name it to what you intend to do:
+  - Example:
+    ````
+    $ git checkout -b BRANCH_NAME
+    ````
+    If you get an error, you may need to fetch fooBar first by using
+    ````
+    $ git remote update && git fetch
+    ````
+  - Use one branch per fix / feature
+- Commit your changes
+  - Please provide a git message that explains what you've done
+  - Please make sure your commits follow the [Semantic Commit Messages](https://seesparkbox.com/foundry/semantic_commit_messages)
+  - Commit to the forked repository
+  - Example:
+    ````
+    $ git commit -am 'Add some fooBar'
+    ````
+- Push to the branch
+  - Example:
+    ````
+    $ git push origin BRANCH_NAME
+    ````
+- Make a pull request
+  - Make sure you send the PR to the <code>fooBar</code> branch
+  - CI is watching you!
 
-- Сделайте форк репозитория (если вы не ключевой разработчик)
-    - [https://github.com/Ovum-Programming-Language/OvumLanguage/fork](https://github.com/Ovum-Programming-Language/OvumLanguage/fork)
-- Проверьте новую ветку и назовите ее в соответствии с тем, что вы собираетесь делать:
-    - Пример:
-        ```
-        $ git checkout -b BRANCH_NAME
-        ```
-        Если вы получите сообщение об ошибке, вам может потребоваться сначала получить fooBar, используя
-        ```
-        $ git remote update && git fetch
-        ```
-    - Используйте одну ветку для каждого исправления / добавления
-- Закоммитьте свои изменения
-    - Пожалуйста, предоставьте git сообщение, объясняющее, что вы сделали
-    - Пожалуйста, убедитесь, что ваши коммиты соответствуют [Semantic Commit Messages](https://seesparkbox.com/foundry/semantic_commit_messages)
-    - Закоммитьте в репозитории
-    - Пример:
-        ```
-        $ git commit -am 'Add some fooBar'
-        ```
-- Запуште в ветку
-    - Пример:
-        ```
-        $ git push origin BRANCH_NAME
-        ```
-- Сделать пул реквест
-    - Убедитесь, что вы отправили пул реквест в ветку <code>fooBar</code>
-    - Travis CI наблюдает за тобой!
-
-Если вы будете следовать этим инструкциям, ваш пул реквест довольно безопасно попадет в основной репозиторий!
+If you follow these instructions, your PR will land pretty safely in the main repo!
