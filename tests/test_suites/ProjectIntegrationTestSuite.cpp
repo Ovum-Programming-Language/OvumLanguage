@@ -1,5 +1,7 @@
 #include "ProjectIntegrationTestSuite.hpp"
 
+#include <filesystem>
+
 void ProjectIntegrationTestSuite::SetUp() {
   std::filesystem::create_directories(kTemporaryDirectoryName);
 }
