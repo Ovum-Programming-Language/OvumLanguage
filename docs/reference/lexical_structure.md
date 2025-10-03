@@ -24,8 +24,8 @@ Ovum reserves certain words like `fun`, `class`, `interface`, `var`, `override`,
 * **Arithmetic**: `+`, `-`, `*`, `/`, `%`
 * **Comparison**: `==`, `!=`, `<`, `<=`, `>`, `>=`
 * **Boolean logic**: `&&` (logical AND), `||` (logical OR), `!` (negation), `xor` (exclusive OR)
-* **Assignment**: `=`
-* **Null handling**: `?.` (safe call), `?:` (Elvis), `!!` (non-null assertion)
+* **Assignment**: `=` (reference assignment), `:=` (copy assignment)
+* **Null handling**: `?.` (safe call), `?:` (Elvis)
 * **Type operations**: `as` (cast), `is` (type test)
 * **Punctuation**: `,` (comma), `;` (semicolon), `:` (colon), `()` (parentheses), `{}` (braces), `[]` (brackets)
 * **Namespace resolution**: `::`
@@ -87,14 +87,16 @@ TypeAliasDecl   ::= "typealias" Identifier "=" Type ";" ;
 
 Type            ::= NullableType | NonNullType ;
 NullableType    ::= NonNullType "?" ;
-NonNullType     ::= PrimitiveType
+NonNullType     ::= FundamentalType
+                 | PrimitiveRefType
                  | "String"
                  | "IntArray" | "FloatArray" | "BoolArray" | "CharArray" | "ByteArray" | "PointerArray"
                  | "ObjectArray"
                  | "StringArray"
                  | Identifier ;              // class/interface names (non-primitive)
 
-PrimitiveType   ::= "Int" | "Float" | "Bool" | "Char" | "Byte" | "Pointer" ;
+FundamentalType ::= "int" | "float" | "bool" | "char" | "byte" | "pointer" ;
+PrimitiveRefType ::= "Int" | "Float" | "Bool" | "Char" | "Byte" | "Pointer" ;
 
 Block           ::= "{" { Statement } "}" ;
 Statement       ::= VarDeclStmt | ExprStmt | ReturnStmt | IfStmt | WhileStmt | ForStmt | UnsafeStmt | Block ;
@@ -108,7 +110,7 @@ ForStmt         ::= "for" "(" Identifier "in" Expression ")" Statement ;
 UnsafeStmt      ::= "unsafe" Block ;
 
 Expression      ::= Assignment ;
-Assignment      ::= ElvisExpr [ "=" Assignment ] ;
+Assignment      ::= ElvisExpr [ ("=" | ":=") Assignment ] ;
 
 ElvisExpr       ::= OrExpr [ "?:" ElvisExpr ] ;  // right-assoc
 
@@ -129,8 +131,7 @@ PostfixOp       ::= "." Identifier
                  | "." Identifier "(" [ ArgList ] ")"
                  | "(" [ ArgList ] ")"          // function call or callable object call
                  | "as" Type                    // explicit cast; downcast yields nullable type
-                 | "is" Type                    // type test → Bool
-                 | "!!"                         // non-null assertion
+                 | "is" Type                    // type test → bool
                  | "?." Identifier [ "(" [ ArgList ] ")" ]  // safe call chain
                  | "?." "(" [ ArgList ] ")"     // safe callable object call
                  ;
