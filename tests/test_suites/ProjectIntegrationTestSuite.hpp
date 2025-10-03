@@ -13,4 +13,4 @@ struct ProjectIntegrationTestSuite : public testing::Test { // special test stru
   void TearDown() override; // method that is called at the end of every test
 };
 
-#endif //TEMPORARYDIRECTORYTESTSUITE_HPP_
+#endif // TEMPORARYDIRECTORYTESTSUITE_HPP_
