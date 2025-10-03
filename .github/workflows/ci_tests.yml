@@ -226,22 +226,42 @@ jobs:
 
           if [ "${#files[@]}" -eq 0 ]; then
             echo "No C/C++ files to analyze."
-            touch tidy_output.txt
+            echo "" > tidy_output.txt
             exit 0
           fi
 
+          echo "Running clang-tidy on ${#files[@]} files..."
           clang-tidy "${files[@]}" -p cmake-build-tidy --format-style=file > tidy_output.txt 2>&1 || true
-          touch tidy_output.txt
+          
+          # Ensure file exists and is readable
+          if [ ! -f tidy_output.txt ]; then
+            echo "" > tidy_output.txt
+          fi
 
       - name: Count warnings and errors
         id: count_issues
         run: |
-          # Count errors and warnings
-          errors=$(grep -c "error:" tidy_output.txt || echo "0")
-          warnings=$(grep -c "warning:" tidy_output.txt || echo "0")
+          # Count errors and warnings - handle empty file case
+          if [ ! -s tidy_output.txt ]; then
+            errors=0
+            warnings=0
+          else
+            errors=$(grep -c "error:" tidy_output.txt 2>/dev/null || echo "0")
+            warnings=$(grep -c "warning:" tidy_output.txt 2>/dev/null || echo "0")
+          fi
+          
+          # Ensure we have clean integer values
+          errors=$(echo "$errors" | tr -d '\n' | head -c 10)
+          warnings=$(echo "$warnings" | tr -d '\n' | head -c 10)
+          
+          # Default to 0 if empty or non-numeric
+          errors=${errors:-0}
+          warnings=${warnings:-0}
 
           echo "errors=$errors" >> $GITHUB_OUTPUT
           echo "warnings=$warnings" >> $GITHUB_OUTPUT
+
+          echo "Found $errors errors and $warnings warnings"
 
           # Fail if more than 3 warnings or any errors
           if [ "$errors" -gt 0 ] || [ "$warnings" -gt 3 ]; then
