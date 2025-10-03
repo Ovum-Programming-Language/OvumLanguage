@@ -220,7 +220,7 @@ fun CanReassign(var str: String): Void {
 ## Type System Characteristics
 
 **Static typing:** Every variable and expression has a type checked at compile time
-**No implicit conversions:** Explicit casting required between different types
+**No implicit conversions except builtin wrappers:** Explicit casting required between different types, except for conversions between primitive reference types and their corresponding fundamentals.
 **Type safety:** Prevents many common errors
 **Nullable types:** Any reference type (including primitive reference types) can be made nullable by appending `?`. Fundamental types cannot be nullable.
 
@@ -236,7 +236,7 @@ val result: float = (intVal as float) + floatVal  // OK: Explicit conversion
 // Using primitive reference types (implicit conversion)
 val refInt: Int = 42  // Implicit conversion from literal
 val refFloat: Float = 3.14  // Implicit conversion from literal
-val sum: Int = refInt + refFloat  // Implicit: Int + Float -> Int
+val sum: Int = refInt + (refFloat as Int)  // Explicit conversion
 val fundamentalSum: int = sum + 10  // Implicit: Int + int -> int
 
 // Converting nullable primitives to fundamentals
