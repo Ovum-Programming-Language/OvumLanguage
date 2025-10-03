@@ -10,10 +10,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Install MinGW toolchain
+        shell: powershell
+        run: |
+          choco install mingw --yes --no-progress
+          echo "C:\tools\mingw64\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+
       - name: Create CMake cache
         run: |
-          cmake -S . -B cmake-build-release -DCMAKE_BUILD_TYPE=Release -G "Unix Makefiles"
-          cmake -S . -B cmake-build-debug -DCMAKE_BUILD_TYPE=Debug -G "Unix Makefiles"
+          cmake -S . -B cmake-build-release -DCMAKE_BUILD_TYPE=Release -G "MinGW Makefiles"
+          cmake -S . -B cmake-build-debug -DCMAKE_BUILD_TYPE=Debug -G "MinGW Makefiles"
 
       - name: Build main target
         shell: bash
@@ -27,14 +33,15 @@ jobs:
 
       - name: Run program
         working-directory: .\cmake-build-release
+        shell: bash
         run: |
-          .\ovum.exe --help
+          ./ovum.exe --help
 
       - name: Run tests
         working-directory: .\cmake-build-debug
+        shell: bash
         run: |
-          echo "Currently unable to run tests on Windows Latest MinGW. See https://gitmemories.com/cristianadam/HelloWorld/issues/12 and https://github.com/microsoft/vscode-cmake-tools/issues/2451"
-          % .\ovum_tests.exe
+          ./ovum_tests.exe
 
   build-matrix:
     name: Tests and application run on ${{ matrix.config.name }}
