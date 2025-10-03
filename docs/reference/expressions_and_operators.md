@@ -21,11 +21,12 @@ Expressions in Ovum include literal values, variable references, function calls,
 * `&&` (logical AND) - short-circuit evaluation
 * `||` (logical OR) - short-circuit evaluation
 * `!` (negation) - unary operator
-* `xor` (exclusive OR) - infix operator on `Bool`
+* `xor` (exclusive OR) - infix operator on `bool`
 
-## Assignment Operator
+## Assignment Operators
 
-* `=` (assignment) - assigns a value to a mutable variable or field. The left-hand side must be a mutable variable or field.
+* `=` (reference assignment) - assigns a reference to a mutable variable or field. The left-hand side must be a mutable variable or field.
+* `:=` (copy assignment) - performs deep copy for reference types. Creates a new object with the same content as the source.
 
 ## Member Access
 
@@ -37,13 +38,12 @@ Expressions in Ovum include literal values, variable references, function calls,
 ## Type Operations
 
 * `expr as Type` - explicit cast (downcast yields nullable type)
-* `expr is Type` - type test (returns `Bool`)
+* `expr is Type` - type test (returns `bool`)
 
 ## Null Handling
 
 * `expr?.member` - safe call (calls only if expr is not null)
 * `expr ?: default` - Elvis operator (returns expr if not null, otherwise default)
-* `expr!!` - non-null assertion (throws error if expr is null)
 
 ## Namespace Resolution
 

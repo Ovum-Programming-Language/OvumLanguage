@@ -30,12 +30,15 @@ Ovum is a strongly statically typed, single-threaded language focused on safety,
 
 ---
 
-## [Types and Nullability](docs/reference/types.md)
+## [Types](docs/reference/types.md) and [Nullability](docs/reference/nullable.md)
 
-- Nullable types: append `?` (e.g., `Int?`).
-- Safe call `?.`, Elvis `?:`, non‑null `!!`.
-- Type test `is`, cast `as` (downcast yields nullable type).
-- Explicit cast to `Bool` allowed for any value.
+- **Fundamental types**: `int`, `float`, `byte`, `char`, `bool`, `pointer` (value types, not nullable, not Objects)
+- **Primitive reference types**: `Int`, `Float`, `Byte`, `Char`, `Bool`, `Pointer` (reference wrappers, nullable, Objects)
+- **Implicit conversion**: Literals convert to primitives (`val count: Int = 0`)
+- **Nullable types**: Append `?` to reference types only (e.g., `Int?`, `String?`)
+- **Safe call `?.`**, **Elvis `?:`** for null handling
+- **Type test `is`**, **cast `as`** (downcast yields nullable type)
+- **Copy assignment `:=`** for deep copying reference types
 
 ---
 
@@ -51,9 +54,9 @@ Ovum is a strongly statically typed, single-threaded language focused on safety,
 - Arithmetic: `+ - * / %`
 - Comparison: `== != < <= > >=`
 - Boolean: `&& || ! xor` (short‑circuit `&&`/`||`).
-- Assignment: `=`
+- Assignment: `=` (reference assignment), `:=` (copy assignment)
 - Member/calls: `. ()` and safe `?.`
-- Null handling: `?. ?: !!`
+- Null handling: `?. ?:`
 - Type ops: `as`, `is`
 - Namespace: `::`
 
@@ -77,7 +80,7 @@ Ovum is a strongly statically typed, single-threaded language focused on safety,
 - Pipeline: `.ovum` → bytecode → Ovum VM.
 - GC for memory safety; JIT compiles hot paths.
 - Single‑threaded execution model.
-- Architectures: amd64, arm64. Numeric widths: `Int` 8 bytes, `Float` 8 bytes.
+- Architectures: amd64, arm64. Numeric widths: `int` 8 bytes, `float` 8 bytes.
 - Entry point: `Main(args: StringArray): Int`.
 
 Build & Run (conceptual): write `.ovum`, compile (parse, type‑check, enforce const/pure), run on VM (JIT + GC).
@@ -98,7 +101,7 @@ Build & Run (conceptual): write `.ovum`, compile (parse, type‑check, enforce c
 
 Only inside `unsafe { ... }`:
 - Global `var` and `static var` writes.
-- Const/mutable casts; `Pointer`, address‑of, dereference.
+- Const/mutable casts; `pointer`, address‑of, dereference.
 - Manual destructor calls.
 - `sys::Interope`; casting any value to (const or mutable) `ByteArray`.
 
@@ -111,35 +114,40 @@ Only inside `unsafe { ... }`:
 ```ovum
 // .ovum file
 fun Main(args: StringArray): Int {
-    val count: Int = args.Length()
+    val count: Int = args.Length()  // Built-in returns Int
     sys::Print("Args count: " + count.ToString())
-    return 0
+    return 0  // Implicit conversion from literal
 }
 ```
 
 ### Pure functions with caching
 
 ```ovum
-pure fun Fib(n: Int): Int {
+pure fun Fib(n: int): int {
     if (n <= 1) return n
-    return Fib(n - 1) + Fib(n - 2)
+    val fib1: int = Fib(n - 1)
+    val fib2: int = Fib(n - 2)
+    return fib1 + fib2
 }
 ```
 
-### `is`, `as`, `!!` and ByteArray casts
+### `is`, `as` and ByteArray casts
 
 ```ovum
 fun DemoCasts(obj: Object): Void {
     if (obj is Point) {
-        val p: Point = (obj as Point)!!         // nullable cast + assert
-        sys::Print(p.ToString())
+        val p: Point? = obj as Point
+        if (p != null) {
+            val nonNullP: Point = p ?: Point(0, 0)  // Use Elvis operator
+            sys::Print(nonNullP.ToString())
+        }
     }
 
     // Bool cast
-    val b1: Bool = (0 as Bool)                  // false
-    val b2: Bool = (42 as Bool)                 // true
-    val b3: Bool = (obj as Bool)                // always true
-    val b4: Bool = ((obj as Point) as Bool)     // true if obj is a Point
+    val b1: Bool = 0 as bool  // false
+    val b2: Bool = 42 as bool  // true
+    val b3: Bool = obj as bool  // always true
+    val b4: Bool = (obj as Point) as bool  // true if obj is a Point
 
     // Unsafe: raw byte views
     unsafe {
@@ -170,11 +178,14 @@ class DefinedFunctional {
 }
 
 val AddNullable: CustomFunctional = pure fun(a: Int?, b: Int?): Int {
-    return (a ?: 0) + (b ?: 0)
+    val aVal: int = a ?: 0  // Implicit conversion from Int? to int
+    val bVal: int = b ?: 0
+    return Int(aVal + bVal)  // Implicit conversion from int to Int
 }
 
 fun Main(args: StringArray): Int {
-    return AddNullable(2, DefinedFunctional(-1)(2))
+    // Constructor call then functional call via `call`
+    return AddNullable(2, DefinedFunctional(-1)(2))  // Implicit conversion from literals
 }
 ```
 
@@ -198,29 +209,30 @@ class Multiplier implements ICalculator {
     }
 }
 
-pure fun ProcessNumbers(calc: ICalculator, numbers: IntArray): Int {
-    var result: Int = 0
+pure fun ProcessNumbers(calc: ICalculator, numbers: IntArray): int {
+    var result: int = 0
     for (num in numbers) {
-        result = result + calc.Calculate(num, 2)
+        val calcResult: Int = calc.Calculate(num, 2)  // Implicit conversion from literal
+        result = result + calcResult  // Implicit conversion
     }
     return result
 }
 
-fun Main(args: StringArray): Int {
+fun Main(args: StringArray): int {
     val numbers: IntArray = IntArray(3)
-    numbers[0] = 5
-    numbers[1] = 10
-    numbers[2] = 15
+    numbers[0] := 5  // Implicit conversion from literal
+    numbers[1] := 10
+    numbers[2] := 15
     
     val adder: ICalculator = Adder()
     val multiplier: ICalculator = Multiplier()
     
-    val sumResult: Int = ProcessNumbers(adder, numbers)
-    val productResult: Int = ProcessNumbers(multiplier, numbers)
+    val sumResult: int = ProcessNumbers(adder, numbers)
+    val productResult: int = ProcessNumbers(multiplier, numbers)
     
-    sys::Print("Sum result: " + sumResult.ToString())
-    sys::Print("Product result: " + productResult.ToString())
+    sys::Print("Sum result: " + Int(sumResult).ToString())
+    sys::Print("Product result: " + Int(productResult).ToString())
     
-    return 0
+    return 0  // Implicit conversion from literal
 }
 ```
