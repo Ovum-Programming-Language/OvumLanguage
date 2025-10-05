@@ -74,11 +74,13 @@ class DefinedFunctional {
 }
 
 val AddNullable: CustomFunctional = pure fun(a: Int?, b: Int?): Int {
-    return (a ?: 0) + (b ?: 0)
+    val aVal: int = a ?: 0  // Conversion from Int? to int
+    val bVal: int = b ?: 0
+    return aVal + bVal
 }
 
 fun Main(args: StringArray): Int {
     // Constructor call then functional call via `call`
-    return AddNullable(2, DefinedFunctional(-1)(2))
+    return AddNullable(2, DefinedFunctional(-1)(2))  // Implicit conversion from literals
 }
 ```

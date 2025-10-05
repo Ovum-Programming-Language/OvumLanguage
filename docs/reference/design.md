@@ -16,7 +16,7 @@ Ovum's core design principles center around:
 ## Key Design Points
 
 * **Strong static typing** with **immutability by default** (`var` required for mutation).
-* **Nullable types** and Kotlin-style null-handling: `Type?`, safe calls `?.`, Elvis `?:`, non-null assertion `!!`.
+* **Nullable types** and Kotlin-style null-handling: `Type?`, safe calls `?.`, Elvis `?:`.
 * **Pure functions** (no side effects, VM-level result caching).
 * **Classes & interfaces**
 

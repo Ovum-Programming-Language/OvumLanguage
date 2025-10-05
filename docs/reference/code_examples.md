@@ -7,7 +7,7 @@ Here are some code examples to help you get started with Ovum.
 ```ovum
 // .ovum file
 fun Main(args: StringArray): Int {
-    val count: Int = args.Length()
+    val count: Int = args.Length()  // Built-in returns Int
     sys::Print("Args count: " + count.ToString())
     return 0
 }
@@ -20,14 +20,14 @@ fun DemoNulls(): Void {
     val a: Int? = null
     val b: Int? = 5
 
-    val sum: Int = (a ?: 0) + (b ?: 0)  // Elvis
-    sys::Print("Sum = " + sum.ToString())
+    val aVal: int = a ?: 0
+    val bVal: int = b ?: 0
+    val sum: int = aVal + bVal
+    sys::Print("Sum = " + Int(sum).ToString())
 
     val name: String? = null
-    sys::Print("Name length = " + (name?.Length() ?: 0).ToString())
-
-    val mustNotBeNull: Int = (b!!)      // ok
-    // val crash: Int = (a!!)           // aborts (unhandleable)
+    val length: int = (name?.Length() ?: 0) as int  // Built-in returns Int
+    sys::Print("Name length = " + Int(length).ToString())
 }
 ```
 
@@ -67,24 +67,29 @@ interface IComparable        { fun IsLess(other: Object): Bool }
 interface IHashable          { fun GetHash(): Int }
 
 class Point implements IStringConvertible, IComparable, IHashable {
-    public val X: Int
-    public val Y: Int
+    public val X: int
+    public val Y: int
 
-    public fun Point(x: Int, y: Int): Point { this.X = x; this.Y = y; return this; }
+    public fun Point(x: int, y: int): Point { this.X = x; this.Y = y; return this; }
 
     public override fun ToString(): String {
-        return "(" + X.ToString() + ", " + Y.ToString() + ")"
+        return "(" + Int(X).ToString() + ", " + Int(Y).ToString() + ")"
     }
 
     public override fun IsLess(other: Object): Bool {
         if (!(other is Point)) return false
-        val p: Point = (other as Point)!!   // safe after is + !!
-        if (this.X != p.X) return this.X < p.X
-        return this.Y < p.Y
+        val p: Point? = other as Point
+        if (p != null) {
+            val nonNullP: Point = p ?: Point(0, 0)  // Use Elvis operator
+            if (this.X != nonNullP.X) return this.X < nonNullP.X
+            return this.Y < nonNullP.Y
+        }
+        return false
     }
 
     public override fun GetHash(): Int {
-        return (X * 1315423911) ^ (Y * 2654435761)
+        val hash: int = (X * 1315423911) ^ (Y * 2654435761)
+        return Int(hash)
     }
 }
 ```
@@ -92,27 +97,32 @@ class Point implements IStringConvertible, IComparable, IHashable {
 ## 5) Pure Functions with Caching
 
 ```ovum
-pure fun Fib(n: Int): Int {
+pure fun Fib(n: int): int {
     if (n <= 1) return n
-    return Fib(n - 1) + Fib(n - 2)
+    val fib1: int = Fib(n - 1)
+    val fib2: int = Fib(n - 2)
+    return fib1 + fib2
 }
 // For user-defined reference types as parameters, implement IComparable.
 ```
 
-## 6) `is`, `as`, `!!`, and ByteArray Casts
+## 6) `is`, `as`, and ByteArray Casts
 
 ```ovum
 fun DemoCasts(obj: Object): Void {
     if (obj is Point) {
-        val p: Point = (obj as Point)!!         // nullable cast + assert
-        sys::Print(p.ToString())
+        val p: Point? = obj as Point
+        if (p != null) {
+            val nonNullP: Point = p ?: Point(0, 0)  // Use Elvis operator
+            sys::Print(nonNullP.ToString())
+        }
     }
 
-    // Bool cast
-    val b1: Bool = (0 as Bool)                  // false
-    val b2: Bool = (42 as Bool)                 // true
-    val b3: Bool = (obj as Bool)                // always true
-    val b4: Bool = ((obj as Point) as Bool)     // true if obj is a Point
+    // bool cast
+    val b1: Bool = 0 as bool  // false
+    val b2: Bool = 42 as bool  // true
+    val b3: Bool = obj as bool  // always true
+    val b4: Bool = (obj as Point) as bool  // true if obj is a Point
 
     // Unsafe: raw byte views
     unsafe {
@@ -155,7 +165,7 @@ fun Main(args: StringArray): Int {
 
 ```ovum
 fun DemoControlFlow(): Void {
-    var i: Int = 0
+    var i: int = 0
     
     // While loop with break and continue
     while (i < 10) {
@@ -166,15 +176,15 @@ fun DemoControlFlow(): Void {
         if (i == 7) {
             break  // Exit loop
         }
-        sys::Print("i = " + i.ToString())
+        sys::Print("i = " + Int(i).ToString())
         i = i + 1
     }
     
     // For loop over array
     val numbers: IntArray = IntArray(3)
-    numbers[0] = 10
-    numbers[1] = 20
-    numbers[2] = 30
+    numbers[0] := 10
+    numbers[1] := 20
+    numbers[2] := 30
     
     for (num in numbers) {
         sys::Print("Number: " + num.ToString())
@@ -189,13 +199,13 @@ fun DemoUnsafeOperations(): Void {
     // Unsafe block for low-level operations
     unsafe {
         // Global mutable state (unsafe)
-        static var globalCounter: Int = 0
+        static var globalCounter: int = 0
         globalCounter = globalCounter + 1
         
         // Pointer operations (unsafe)
         val obj: Point = Point(10, 20)
-        val ptr: Pointer = &obj  // address-of
-        val deref: Object = *ptr  // dereference to Object, Pointer is not typed
+        val ptr: pointer = &obj  // address-of
+        val deref: Object = *ptr  // dereference to Object, pointer is not typed
         
         // ByteArray casting (unsafe)
         val bytes: ByteArray = (obj as ByteArray)
@@ -203,8 +213,8 @@ fun DemoUnsafeOperations(): Void {
         
         // Foreign function interface (unsafe)
         val input: ByteArray = "Hello".ToUtf8Bytes()
-        val output: ByteArray = ByteArray(4)
-        val result: Int = sys::Interope("libc.so", "strlen", input, output)
+        val output: ByteArray = ByteArray(8)
+        val result: int = sys::Interope("libc.so", "strlen", input, output)
     }
 }
 ```
@@ -230,8 +240,11 @@ class User {
 
 fun ProcessUsers(users: UserList): Void {
     for (i in 0..users.Length()) {
-        val user: User = (users[i] as User)!!
-        sys::Print("User " + user.Id.ToString() + ": " + user.Name)
+        val user: User? = users[i] as User
+        if (user != null) {
+            val nonNullUser: User = user ?: User(0, "Unknown")  // Use Elvis operator
+            sys::Print("User " + nonNullUser.Id.ToString() + ": " + nonNullUser.Name)
+        }
     }
 }
 ```
@@ -241,10 +254,10 @@ fun ProcessUsers(users: UserList): Void {
 
 ```ovum
 class DatabaseConnection {
-    private val ConnectionId: Int
-    private val IsConnected: Bool
+    private val ConnectionId: int
+    private val IsConnected: bool
     
-    public fun DatabaseConnection(id: Int): DatabaseConnection {
+    public fun DatabaseConnection(id: int): DatabaseConnection {
         this.ConnectionId = id
         this.IsConnected = true
         // Establish database connection
@@ -261,7 +274,7 @@ class DatabaseConnection {
     public destructor(): Void {
         if (IsConnected) {
             // Close database connection
-            sys::Print("Closing connection " + ConnectionId.ToString())
+            sys::Print("Closing connection " + Int(ConnectionId).ToString())
         }
     }
 }
@@ -296,28 +309,29 @@ class Multiplier implements ICalculator {
     }
 }
 
-pure fun ProcessNumbers(calc: ICalculator, numbers: IntArray): Int {
-    var result: Int = 0
+pure fun ProcessNumbers(calc: ICalculator, numbers: IntArray): int {
+    var result: int = 0
     for (num in numbers) {
-        result = result + calc.Calculate(num, 2)
+        val calcResult: Int = calc.Calculate(num, 2)
+        result = result + calcResult
     }
     return result
 }
 
-fun Main(args: StringArray): Int {
+fun Main(args: StringArray): int {
     val numbers: IntArray = IntArray(3)
-    numbers[0] = 5
-    numbers[1] = 10
-    numbers[2] = 15
+    numbers[0] := 5
+    numbers[1] := 10
+    numbers[2] := 15
     
     val adder: ICalculator = Adder()
     val multiplier: ICalculator = Multiplier()
     
-    val sumResult: Int = ProcessNumbers(adder, numbers)
-    val productResult: Int = ProcessNumbers(multiplier, numbers)
+    val sumResult: int = ProcessNumbers(adder, numbers)
+    val productResult: int = ProcessNumbers(multiplier, numbers)
     
-    sys::Print("Sum result: " + sumResult.ToString())
-    sys::Print("Product result: " + productResult.ToString())
+    sys::Print("Sum result: " + Int(sumResult).ToString())
+    sys::Print("Product result: " + Int(productResult).ToString())
     
     return 0
 }
