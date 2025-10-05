@@ -68,7 +68,7 @@ class Point implements IComparable {
     
     public override fun IsLess(other: Object): Bool {
         if (!(other is Point)) return false
-        val p: Point = (other as Point)!!
+        val p: Point = (other as Point) ?: Point(0, 0)
         if (this.X != p.X) return this.X < p.X
         return this.Y < p.Y
     }
@@ -289,13 +289,13 @@ val comparable: IComparable = point        // Upcast to interface
 
 // Downcasting with type test
 if (obj is Point) {
-    val p: Point = (obj as Point)!!  // Safe after type test
+    val p: Point = (obj as Point) ?: Point(0, 0)
     sys::Print("Point: " + p.ToString())
 }
 
 // Type test operator
 if (shape is ColoredRectangle) {
-    val rect: ColoredRectangle = (shape as ColoredRectangle)!!
+    val rect: ColoredRectangle = (shape as ColoredRectangle) ?: ColoredRectangle(0, 0, "red")
     sys::Print("Rectangle color: " + rect.GetColor())
 }
 ```
@@ -383,7 +383,7 @@ class ResourceManager {
 
 **Type Safety:**
 - Use type tests before casting (`is` before `as`)
-- Prefer safe operations (`?.` and `?:` over `!!`)
+- Prefer safe operations
 - Handle nullable types properly
 
 ```ovum
@@ -395,7 +395,7 @@ interface IWritable { fun Write(content: String): Void }
 fun SafeProcessObject(obj: Object?): Void {
     val result: String = obj?.ToString() ?: "null"
     if (obj is Person) {
-        val person: Person = (obj as Person)!!
+        val person: Person = (obj as Person) ?: Person("Unknown")
         sys::Print("Person: " + person.ToString())
     }
 }

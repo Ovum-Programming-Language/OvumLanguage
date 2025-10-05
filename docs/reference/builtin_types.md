@@ -36,13 +36,12 @@ val hash: Int = greeting.GetHash()
 
 Any primitive type can be made nullable by appending `?` (e.g., `Int?`, `String?`). Nullable types are passed by reference and can hold either a value or `null`.
 
-**Important**: You cannot directly call methods on nullable types using `.` - you must use the safe call operator `?.` or non-null assertion `!!`.
+**Important**: You cannot directly call methods on nullable types using `.` - you must use the safe call operator `?.`.
 
 ```ovum
 val nullableString: String? = "Hello"
 // val length: Int = nullableString.Length()  // ERROR: Cannot call method directly on nullable
 val safeLength: Int = nullableString?.Length() ?: 0  // Correct: Use safe call
-val forcedLength: Int = nullableString!!.Length()    // Correct: Use non-null assertion
 ```
 
 ## Array Types
