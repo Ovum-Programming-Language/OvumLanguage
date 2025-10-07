@@ -3,8 +3,8 @@
 Ovum is a strongly statically typed, single-threaded language focused on safety, clarity, and performance. It uses Kotlin-like syntax, immutability by default, a GC + JIT VM, interface-based polymorphism, and support for pure functions and functional objects.
 
 - Contribute: see [`CONTRIBUTING.md`](CONTRIBUTING.md).
-- Project docs: [`docs/README.md`](docs/README.md).
-- Full language reference: [`docs/reference/README.md`](docs/reference/README.md).
+- Project docs: [Online](https://ovum-programming-language.github.io/OvumDocs/) or [`docs/README.md`](docs/README.md).
+- Full language reference: [Online](https://ovum-programming-language.github.io/OvumDocs/reference/) or [`docs/reference/README.md`](docs/reference/README.md).
 
 ---
 
