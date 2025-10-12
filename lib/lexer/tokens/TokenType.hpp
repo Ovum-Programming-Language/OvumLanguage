@@ -3,11 +3,7 @@
 
 #include <string_view>
 
-enum class TokenType {
-  IDENT, KEYWORD, INT, FLOAT,
-  STRING, CHAR, BOOL, OPERATOR,
-  PUNCT, NEWLINE, COMMENT, EOF_T
-};
+enum class TokenType { IDENT, KEYWORD, INT, FLOAT, STRING, CHAR, BOOL, OPERATOR, PUNCT, NEWLINE, COMMENT, EOF_T };
 
 inline std::string_view to_string_view(TokenType token_type) {
   switch (token_type) {
