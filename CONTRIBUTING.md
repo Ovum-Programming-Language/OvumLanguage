@@ -2,6 +2,9 @@
 
 - Contributing to The Ovum Language is fairly easy. This document shows you how to get started
 
+> Note that this repository contains ONLY the toolset integration. That means that the actual tool implementations are in different repositories. For example, the compiler is in the [OvumCompiler](https://github.com/Ovum-Programming-Language/OvumCompiler) repository.
+> DO NOT submit PRs to this repository, only to the repositories of the actual tools, unless you are sure that the change is applicable to the toolset integration itself (e.g. introduction of a new tool).
+
 ## General
 - The [Codebase Structure](./CODEBASE_STRUCTURE.md) has detailed information about how the various files in this project are structured
 - Please ensure that any changes you make are in accordance with the [Coding Guidelines](./CODING_GUIDELINES.md) of this repo
